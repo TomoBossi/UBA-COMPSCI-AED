@@ -1,0 +1,130 @@
+1.a. ¬F v T == T
+1.b. (T v F) v T == T
+1.c. ¬T == F
+1.d. ¬T == F
+1.e. T <-> F == F
+1.f. T ^ T == T
+1.g. T <-> T == T
+1.h. F ^ T == F
+
+2. 
+c = "es mi cumpleaños"
+t = "hay torta" 
+- (c v t) -> t
+c t (c v t) ((c v t) -> t)
+T T T       T
+T F T       F
+F T T       T
+F F F       T
+- hay torta (t)
+- no es mi cumpleaños (¬c)
+- es mi cumpleaños (c)
+
+3.a. 
+¬p -> (q ^ r) == (equivalencia de la implicación)
+p v (q ^ r) == (distributiva)
+(p v q) ^ (p v r); equivalentes
+3.b.
+¬(¬p) -> (¬(¬p ^ ¬q)) == (doble negacion, De Morgan)
+p -> (p v q) == (equivalencia de la implicación)
+¬p v (p v q) == (asociativa)
+(¬p v p) v q == T (tautología); no equivalentes
+3.c.
+((T ^ p)) ^ (¬p v F)) -> ¬(¬p v q) == (simplificación, De Morgan)
+(p ^ ¬p) -> p ^ ¬q == T (tautología); no equivalentes
+3.d.
+p v (¬p ^ q) == (distributiva)
+(p v ¬p) ^ (p v q) == (simplificación)
+p v q == (equivalencia de la implicación)
+¬p -> q; equivalentes
+3.e.
+p -> (q ^ ¬(q -> r)) == (equivalencia de la implicación)
+¬p v (q ^ ¬(q -> r)) == (distributiva)
+(¬p v q) ^ (¬p v ¬(q -> r)) == (equivalencia de la implicación)
+(¬p v q) ^ (¬p v ¬(¬q v r)) == (De Morgan)
+(¬p v q) ^ (¬p v (q ^ ¬r)); equivalentes
+
+4.a. tautología
+4.b. contradicción
+4.c. tautología
+p q (¬p v q) (p -> q)
+T T T        T
+T F F        F
+F T T        T
+F F T        T
+4.d. tautología
+p q (p ^ q) ((p ^ q) -> p)
+T T T       T
+T F F       T
+F T F       T
+F F F       T
+4.e. tautologia
+p q r (p ^ (q v r)) (p ^ q) (p ^ r) ((p ^ q) v (p ^ r))
+T T T T             T       T       T
+T T F T             T       F       T
+T F T T             F       T       T
+T F F F             F       F       F
+F T T F             F       F       F
+F T F F             F       F       F
+F F T F             F       F       F
+F F F F             F       F       F
+4.f. tautología
+p q r (p -> (q -> r)) ((p -> q) -> (p -> r))
+T T T T               T
+T T F F               F
+T F T T               T
+T F F T               T
+F T T T               T
+F T F T               T
+F F T T               T
+F F F T               T
+
+5.a. F > T
+5.b. (p ^ q) > (p v q)
+5.c. (p ^ q) > p
+5.d. p > (p v q)
+5.e. no comparables
+5.f. no comparables
+p q (p -> q) (p -> (p -> q)) ((p -> q) -> p)
+T T T        T               T
+T F F        F               T
+F T T        T               F
+F F T        T               F
+False es la proposición más fuerte, True la más débil
+
+6.a. (b vL ¬x) (requiere conmutar previamente al cambio de operador, caso contrario la indefinición no es salvable)
+6.b. ((c vL (y ^ a)) v b)
+6.c. ¬(c vL y)
+6.d. (¬(c vL y) <-> (¬c ^L ¬y))
+6.e. ((c vL y) ^ (a v b))
+6.f. (((c vL y) ^ (a v b)) <-> (c vL (y ^ a) v b))
+6.g. (¬c ^L ¬y)
+
+7.a. ((p v q) vL r)
+7.b. ((¬p ^ ¬q) ^L ¬r)
+7.c. ((¬p ^ ¬q) ^L r)
+7.d. ((p ^ q) ^ ((p ^ q) vL r))
+7.e. ver 7.a.
+7.f. ver 7.c.
+
+8.a. 
+ejemplo: i == 11 causa que todo el cuantificador se haga F 
+corrección: (∀i:Z)((0 <= i < 10) -> P(i))
+8.b.
+ejemplo: i == 11 causa que todo el cuantificador se haga T
+corrección: (∃i:Z)((0 <= i < 10) ^ P(i))
+8.c.
+ejemplo: algún natural menor a 10 que cumpla Q y no cumpla P
+corrección: (∀x:Z)((0 <= x < 10) -> (P(x) -> Q(x)))
+ejemplo: algún natural menor a 10 que cumpla P pero no cumpla Q
+corrección: ¬(∃x:Z)(0 <= x < 10 ^ (P(x) ^ Q(x)))
+
+9.a. (∃x:Z)(0 <= x < 10 ^ P(x) ^ (∀y:Z)((0 <= y < 10 ^ y != x) -> ¬P(y)))
+9.b. asumiendo unicidad, (∃x1,x2:Z)(0 <= x1, x2 < 10 ^ x1 != x2 ^ P(x1) ^ P(x2) ^ (∀y:Z)((0 <= y < 10 ^ y != x1 ^ y != x2) -> ¬P(y)))
+9.c. (∀x:Z)((x mod 2 == 0 ^ P(x)) -> ¬Q(x))
+9.d. ((∃x:Z)(0 <= x < 10 ^ ¬P(x)) -> ¬(∃x:Z)(0 <= x < 10 ^ Q(x))) ^ ((∀x:Z)(0 <= x < 10 -> P(x)) -> (∃x1,x2:Z)(0 <= x1, x2 < 10 ^ x1 != x2 ^ Q(x1) ^ Q(x2)))
+
+10.a. el cumplimiento de la segunda formula incluye al cumplimiento de la primera, por lo tanto su cumplimiento implica el cumplimiento de la primera, no así viceversa. f2 > f1.
+10.b. idem 10.a., f2 > f1.
+10.c. no comparables, ninguna implica a la otra.
+10.d. como en ambos casos la primera parte del predicado es k == 0, si no se cumple k == 0 ambas formulas son F y si se cumple k == 0 entonces la primera implica a la segunda, porque la segunda se reduce a T. Por lo tanto, f1 > f2.
