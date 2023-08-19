@@ -122,12 +122,20 @@ class Funciones {
         return res;
     }
 
-    String invertir(String s) {
-        String s_rev = "";
-        for (int i = s.length() - 1; i >= 0; i--) {
-            s_rev += s.charAt(i);
+    String slice(String s, int start, int end) {
+        String res = "";
+        for (int i = start; (i < s.length() && end < start) || i < end; i++) {
+            res += s.charAt(i);
         }
-        return s_rev;
+        return res;
+    }
+
+    String invertir(String s) {
+        String s_inv = "";
+        for (int i = s.length() - 1; i >= 0; i--) {
+            s_inv += s.charAt(i);
+        }
+        return s_inv;
     }
 
     boolean esSufijo(String s1, String s2) {
