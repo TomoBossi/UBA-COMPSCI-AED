@@ -1,0 +1,261 @@
+1.a.
+pred esCuadrado(x: Z) {(∃n: N)(n^2 = x)}
+1.b.
+pred esPrimo(x: Z) {x > 1 ^ ¬(∃n: N)((1 < n < x) ^L (x mod n = 0))}
+1.c.
+pred sonCoprimos(x,y: Z) {¬(∃n: N)(((1 < n < x) ^ (1 < n < y)) ^L (x mod n = 0 ^ y mod n = 0))}
+1.d.
+pred mayorPrimoQueDivide(x,y: Z) {(x mod y = 0) ^ esPrimo(y) ^ ¬(∃n: N)((y < n <= x) ^L (esPrimo(n) ^ x mod n = 0))}
+
+2.a.
+pred esPrefijo(s0,s1: seq<T>) {(|s0| <= |s1|) ^L ((∀i: Z)(0 <= i < |s0| =>L (s0[i] = s1[i])))}
+2.b.
+pred estaOrdenada(s: seq<T>) {(∀i: Z)(0 <= i < |s|-1 =>L (s[i] < s1[i+1]))}
+2.c.
+pred hayUnoParQueDivideAlResto(s: seq<T>) {(∃i: Z)(0 <= i < |s| =>L ((s[i] mod 2 = 0) ^ (∀j: Z)((0 <= j < |s| ^ i != j) =>L (s[j] mod s[i] = 0))))}
+2.d.
+pred sinRepetidos(s: seq<T>) {(∀e: T)(#apariciones(s, e) <= 1)}
+2.e.
+pred enTresPartes(s: seq<Z>) {((|s| >= 3) ^L (s[0] = 0 ^ s[|s|-1] = 2)) ^ (∀i: Z)(0 <= i < |s|-1 =>L ((s1[i+1] = s[i]) v (s[i+1] = s[i] + 1)))}
+pred enTresPartes(s: seq<Z>) {(s = <>) vL (((|s| > 0) ^L (s[0] >= 0 ^ s[|s|-1] <= 2)) ^ (∀i: Z)(0 <= i < |s|-1 =>L ((s1[i+1] = s[i]) v (s[i+1] = s[i] + 1))))}
+
+3.a.
+aux #apariciones(in s: seq<T>, in e: T): N = Σ(i=0;|s|-1)(if s[i] = e then 1 else 0 fi);
+3.b.
+aux sumaPosImpares(in s: seq<R>): R = Σ(i=0;|s|-1)(if (i mod 2 = 1) then s[i] else 0 fi);
+3.c.
+aux sumaPositivos(in s: seq<R>): R = Σ(i=0;|s|-1)(if s[i] > 0 then s[i] else 0 fi);
+3.d.
+aux sumaInversos(in s: seq<R>): R = Σ(i=0;|s|-1)(if s[i] != 0 then 1/s[i] else 0 fi);
+
+4.a.
+Error de índice cuando i = 0.
+proc progresionGeometricaFactor2(in l: seq<Z>, out res: Bool) {
+    requiere {True}
+    asegura {res = True <=> ((∀i: Z)(0 < i < |l| =>L l[i] = 2 * l[i-1]))}
+}
+4.b.
+Usa una variable o constante x inexistente o indefinida, 
+nunca dice que res es algún valor de la secuencia, 
+no pide que la secuencia sea no vacía.
+proc minimo(in l: seq<Z>, out res: Z) {
+    requiere {|l| > 0}
+    asegura {res ∈ l ^ (∀y: Z)((y ∈ l ^ y != res) => y > res)}
+}
+
+5.a.I.
+{3}
+5.a.II.
+{0, 5}
+5.a.III.
+{0, 1, 2, 3, 4, 5}
+5.b.I.
+{3}
+5.b.II.
+{0}
+5.b.III.
+{0}
+5.c.
+Para los casos donde hay una única aparición del máximo absoluto.
+
+6.a.
+Incorrecta por asegurar simultaneidad de condiciones mutuamente excluyentes (el asegura es una contradicción).
+6.b.
+Correcta
+6.c.
+Incorrecta por asegurar que res puede efectivamente valer cualquier cosa (el asegura es una tautología).
+6.d.
+Correcta
+
+7.a.
+res = 9, hace verdadera la postcondición.
+7.b.
+x = 0.25 devuelve res = 0.25, no hace verdadera la postcondición.
+x = 1 devuelve res = 1, no hace verdadera la postcondición.
+x = -0.2 devuelve res = 0.04, hace verdadera la postcondición.
+x = -7 devuelve res = 49, hace verdadera la postcondición.
+7.c.
+{x < 0 v x > 1}
+
+8.a.
+P3 > P1 > P2
+8.b.
+Q3 > Q1 > Q2
+8.c,d.
+No hay especificación del item anterior, la consigna está rota.
+Ver consigna 9 de guía 2 de IP.
+
+9.a.
+(x != 0) => (n <= 0 => x != 0)
+p => (q => p)
+p => ¬q v p
+Si p es verdadera, p v ¬q también lo es cualquiera sea q siempre y cuando q no se indefina, y q = {n <= 0} no puede indefinirse.
+Por esto y porque la implicación inversa no es tautológica, el requiere de p1 es más fuerte que el requiere de p2.
+9.b.
+{res = floor(x^n)} es más fuerte que {x^n - 1 < res <= x^n}, el primero es un caso particular del segundo.
+9.c.
+Como el requiere de p1 es más fuerte que el de p2 y su asegura más débil, a satisface p1.
+Ver resolución de ejercicio 9 de guía 2 de IP.
+
+10.a.
+proc esPar(in x: Z, out res: Bool) {
+    requiere {True}
+    asegura {(res = True) <=> (x mod 2 = 0)}
+}
+10.b.
+proc esMultiplo(in n,m: Z, out res: Bool) {
+    requiere {True}
+    asegura {(res = True) <=> (n mod m = 0)}
+}
+10.c.
+proc divisoresPositivos(in n: Z, out res: seq<Z>) {
+    requiere {n > 0}
+    asegura {sinRepetidos(res) ^ (∀m: Z)(((0 < m <= |n|) => ((m ∈ res) <=> (esMultiplo(n, m)))) ^ (¬(0 < m <= |n|) => ¬(m ∈ res)))}
+    /* pred esMultiplo(in n,m: Z) {n mod m = 0} */
+}
+10.d.
+proc factorizacion(in n: Z, out res: seq<ZxN>) {
+    requiere {n > 0}
+    asegura {
+        /* sinRepetidos(res) ^ */
+        /* sinFactoresRepetidos(res) ^ */
+        factoresOrdenados(res) ^
+        sonFactoresPrimos(res) ^
+        esFactorizacion(res, n)
+    }
+    /* pred sinFactoresRepetidos(s: seq<ZxN>) {(∀i: Z)((0 <= i < |s|) =>L ((∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[i]0 != s[j]0))))} */
+    pred factoresOrdenados(s: seq<ZxN>) {(∀i: Z)((0 <= i < |s|-1) =>L (s[i]0 < s[i+1]0))}
+    pred sonFactoresPrimos(s: seq<ZxN>) {(∀i: Z)((0 <= i < |s|) =>L (esPrimo(s[i]1)))}
+    pred sonFactorizacion(s: seq<ZxN>, n: Z) {n = π(i=0;|s|-1)(s[i]0^s[i]1)}
+}
+
+11.a.
+proc incluida(in s,t: seq<T>, out res: Bool) {
+    requiere {True}
+    asegura {(∀e: T)(#apariciones(t, e) >= #apariciones(s, e))}
+}
+11.b.
+proc interseccion(in s,t: seq<T>, out res: seq<T>) {
+    requiere {True}
+    asegura {(∀e: T)(#apariciones(res, e) = min(#apariciones(s, e), #apariciones(t, e)))}
+    aux min(in a,b: N): N = if a < b then a else b;
+}
+11.c.
+proc divisorMasComun(in s: seq<Z>, out res: Z) {
+    requiere {(|s| > 0) ^ (∃i: Z)((0 <= i < |s|) ^L (s[i] != 0))}
+    asegura {((res ∈ s) ^ (res != 0)) ^L ¬(∃i: Z)((0 <= i < |s|) ^L (s[i] != 0) ^L (cantidadDivisibles(s, s[i]) > cantidadDivisibles(s, res)))}
+    aux cantidadDivisibles(in s: seq<Z>, in m: Z): N = Σ(i=0;|s|-1)(if (s[i] mod m = 0) then 1 else 0 fi);
+}
+11.d.
+proc maximo(in s: seq<Z>, out res: Z) {
+    requiere {|s| > 0}
+    asegura {(res ∈ s) ^ ¬(∃i:Z)((0 <= i < |s|) ^L (s[i] > res))}
+}
+proc subsecuenciaContenedoraDelMaximo(in l: seq<seq<Z>>, out res: seq<Z>) {
+    requiere {(∃i:Z)((0 <= i < |l|) ^L (|l[i]| > 0)}
+    asegura {((res ∈ s) ^ (|res| > 0)) ^L ¬(∃i: Z)((0 <= i < |l|) ^L (|l[i]| > 0) ^L (maximo(l[i]) > maximo(res)))}
+}
+11.e.
+proc permutaciones(in s: seq<T>, out res: seq<seq<T>>) {
+    requiere {True}
+    asegura {sinRepetidos(res) ^ (∀t: seq<T>)((t ∈ res) <=> (incluida(s, t) ^ incluida(t, s)))}
+}
+proc elementoAusente(in s: seq<T>, out res: T) {
+    requiere {True}
+    asegura {¬(res ∈ s)}
+}
+proc rellenarConElem(in s: seq<T>, in size: N, in e: T, out res: seq<T>) {
+    requiere {True}
+    asegura {
+        ((res = s) <=> (|s| >= size)) v (
+            |res| = size ^ 
+            (∀i: Z)((0 <= i < |s|) =>L (res[i] = s[i])) ^ 
+            (∀i: Z)((|s| <= i < |res|) =>L (res[i] = e))
+        )    
+    }
+}
+proc eliminarElemento(in s: seq<T>, in e: T, out res: seq<T>) {
+    requiere {True}
+    asegura {
+        (|res| = |s| - #apariciones(s, e)) ^
+        (∀i: Z)(((0 <= i < |s|) ^ (s[i] != e)) =>L (s[i] = res[i - #apariciones(subseq(s, 0, i), e)]))
+    }
+}
+proc esSubseqOrdenada(in s,t: seq<T>, out res: Bool) { /* preguntar, está especificado muuuy "algoritmicamente" */
+    requiere {(|s| ∈ Z) ^ |s| ∈ Z (|s| <= |t|) ^ e0 = elementoAusente(concat(s, t))}
+    asegura {
+        (res = True) <=> (
+            incluida(s, t) ^ 
+            (∃sub: seq<Z>)(
+                sub ∈ permutaciones(rellenarConElem(s, |t|, e0)) ^
+                (∀i: Z)(((0 <= i < |sub|) ^ (sub[i] != e0)) =>L (sub[i] = t[i])) ^
+                s = eliminarElemento(sub, e0)
+            )
+        )
+    }
+}
+proc partes(in l: seq<T>, out res: seq<seq<T>>) {
+    requiere {sinRepetidos(l)}
+    asegura {sinRepetidos(res) ^ (∀sub: seq<Z>)((sub ∈ res) <=> ((|sub| <= |l|) ^L (esSubseqOrdenada(sub, l))))}
+}
+
+12.a.
+La especificación no es correcta ya que c podría no valer el valor deseado a + b para los a, b pasados como parámetro, ya que podrían haber sido modificados.
+12.b.
+Es correcta. /* preguntar */
+12.c.
+Es correcta, aunque no parece haber un propósito en que a, b sean inout en vez de in. /* preguntar */
+En cualquier caso creo que sería más razonable que c sea de tipo out.
+
+13.a.
+Es incorrecta ya que res podría ser un valor no deseado (porque l podría haber sido modificada) y porque no especifica sobre el estado final de l.
+Por ejemplo para el input l = <1,2,3> la función podría devolver res = 5 (no es lo esperado) habiendo modificando l a <5,4,3> (no es lo esperado).
+13.b.
+Es incorrecta ya que aunque res será el valor esperado no especifica sobre el estado final de l.
+Por ejemplo para el input l = <1,2,3> la función devolvería res = 1 (es lo esperado) pero podría haber modificado l a <5,4,3> (no es lo esperado).
+13.c.
+Es incorrecta ya que aunque res será el valor esperado, subespecifica sobre el estado final de l. Además, L0 no está explicitamente definida.
+Por ejemplo para el input l = <1,2,3> la función devolvería res = 1 (es lo esperado) pero podría haber modificado l a <5,4> (no es lo esperado).
+13.d.
+Es correcta.
+
+14.a.
+Incorrecta por subespecificar, no especifica sobre qué pasa con las posiciones impares
+14.b.
+Incorrecta ya que podría indefinirse, l podría haber sido modificada de manera de ser más larga que L0 en el estado final.
+14.c.
+Incorrecta por subespecificar, l podría haber sido modificada y por lo tanto res (que asumo es tipo out y lo que devuelve la función) podría ser cualquier secuencia de enteros.
+proc duplicarPares(inout l: seq<Z>) {
+    requiere {l = L0}
+    asegura {
+        |l| = |L0| ^
+        (∀i: Z)((0 <= i < |l| ^ i mod 2 != 0) =>L l[i] = L0[i]) ^
+        (∀i: Z)((0 <= i < |l| ^ i mod 2 = 0) =>L l[i] = 2*L0[i])
+    }
+}
+
+15.a.
+proc primoAnterior(in n: N, out p: N) {
+    requiere {n > 2}
+    asegura {esPrimo(p) ^ (p < n) ^ ¬(∃m: N)((p < m < n) ^L esPrimo(m))}
+}
+proc primosHermanos(inout l: seq<Z>) {
+    requiere {l = L0 ^ (∀i: Z)((0 <= i < |l|) => (l[i] > 2))}
+    asegura {(|l| = |L0|) ^ (∀i: Z)((0 <= i < |l|) =>L (l[i] = primoAnterior(L0[i])))}
+}
+15.b.
+proc reemplazar(inout l: seq<Char>, in a,b: Char) {
+    requiere {l = L0}
+    asegura {(|l| = |L0|) ^ (∀i: Z)((0 <= i < |l|) =>L (l[i] = if (L0[i] = a) then b else L0[i]))}
+}
+15.c.
+proc limpiarDuplicados(inout l: seq<Char>, out dup: seq<Char>) {
+    requiere {l = L0}
+    asegura {(|l| <= |L0|) ^L (esSubseqOrdenada(l, L0) ^ noFaltaNinguno(l, L0) ^ sinRepetidos(l) ^ sonDuplicados(L0, dup))}
+    pred sonDuplicados(in s,d: seq<Char>) {
+        |d| < |s| ^
+        (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) > 1)) =>L (#apariciones(d, s[i]) = #apariciones(s, s[i]) - 1)) ^
+        (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) <= 1)) =>L (#apariciones(d, s[i]) = 0))
+    }
+    pred noFaltaNinguno(in s,t: seq<Char>) {(∀c: Char)((c ∈ t) => (c ∈ s))} /* La implicación inversa ya está implicita en esSubseqOrdenada */
+}
