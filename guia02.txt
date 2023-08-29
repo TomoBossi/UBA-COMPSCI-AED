@@ -102,11 +102,13 @@ proc esPar(in x: Z, out res: Bool) {
     requiere {True}
     asegura {(res = True) <=> (x mod 2 = 0)}
 }
+pred esPar(x: Z) {x mod 2 = 0}
 10.b.
 proc esMultiplo(in n,m: Z, out res: Bool) {
     requiere {True}
     asegura {(res = True) <=> (n mod m = 0)}
 }
+pred esMultiplo(n,m: Z) {n mod m = 0}
 10.c.
 proc divisoresPositivos(in n: Z, out res: seq<Z>) {
     requiere {n > 0}
@@ -132,8 +134,9 @@ proc factorizacion(in n: Z, out res: seq<ZxN>) {
 11.a.
 proc incluida(in s,t: seq<T>, out res: Bool) {
     requiere {True}
-    asegura {(∀e: T)(#apariciones(t, e) >= #apariciones(s, e))}
+    asegura {res = (∀e: T)(#apariciones(t, e) >= #apariciones(s, e))}
 }
+pred incluida(s,t: seq<T>) {(∀e: T)(#apariciones(t, e) >= #apariciones(s, e))}
 11.b.
 proc interseccion(in s,t: seq<T>, out res: seq<T>) {
     requiere {True}
@@ -153,50 +156,20 @@ proc maximo(in s: seq<Z>, out res: Z) {
 }
 proc subsecuenciaContenedoraDelMaximo(in l: seq<seq<Z>>, out res: seq<Z>) {
     requiere {(∃i:Z)((0 <= i < |l|) ^L (|l[i]| > 0)}
-    asegura {((res ∈ s) ^ (|res| > 0)) ^L ¬(∃i: Z)((0 <= i < |l|) ^L (|l[i]| > 0) ^L (maximo(l[i]) > maximo(res)))}
-}
-11.e.
-proc permutaciones(in s: seq<T>, out res: seq<seq<T>>) {
-    requiere {True}
-    asegura {sinRepetidos(res) ^ (∀t: seq<T>)((t ∈ res) <=> (incluida(s, t) ^ incluida(t, s)))}
-}
-proc elementoAusente(in s: seq<T>, out res: T) {
-    requiere {True}
-    asegura {¬(res ∈ s)}
-}
-proc rellenarConElem(in s: seq<T>, in size: N, in e: T, out res: seq<T>) {
-    requiere {True}
-    asegura {
-        ((res = s) <=> (|s| >= size)) v (
-            |res| = size ^ 
-            (∀i: Z)((0 <= i < |s|) =>L (res[i] = s[i])) ^ 
-            (∀i: Z)((|s| <= i < |res|) =>L (res[i] = e))
-        )    
-    }
-}
-proc eliminarElemento(in s: seq<T>, in e: T, out res: seq<T>) {
-    requiere {True}
-    asegura {
-        (|res| = |s| - #apariciones(s, e)) ^
-        (∀i: Z)(((0 <= i < |s|) ^ (s[i] != e)) =>L (s[i] = res[i - #apariciones(subseq(s, 0, i), e)]))
-    }
-}
-proc esSubseqOrdenada(in s,t: seq<T>, out res: Bool) { /* preguntar, está especificado muuuy "algoritmicamente" */
-    requiere {(|s| ∈ Z) ^ |s| ∈ Z (|s| <= |t|) ^ e0 = elementoAusente(concat(s, t))}
-    asegura {
-        (res = True) <=> (
-            incluida(s, t) ^ 
-            (∃sub: seq<Z>)(
-                sub ∈ permutaciones(rellenarConElem(s, |t|, e0)) ^
-                (∀i: Z)(((0 <= i < |sub|) ^ (sub[i] != e0)) =>L (sub[i] = t[i])) ^
-                s = eliminarElemento(sub, e0)
-            )
+    asegura {((res ∈ s) ^ (|res| > 0)) ^L ¬(∃i: Z)((0 <= i < |l|) ^L (|l[i]| > 0) ^L contieneMaximoMayor(l[i], res))}
+    pred contieneMaximoMayor(s,t: seq<Z>) {
+        (∃i: Z)((0 <= i < |s|) ^L 
+            (∀j: Z)((0 <= j < |t|) =>L (s[i] > t[j]))
         )
     }
 }
+11.e.
 proc partes(in l: seq<T>, out res: seq<seq<T>>) {
     requiere {sinRepetidos(l)}
-    asegura {sinRepetidos(res) ^ (∀sub: seq<Z>)((sub ∈ res) <=> ((|sub| <= |l|) ^L (esSubseqOrdenada(sub, l))))}
+    asegura {sinRepetidos(res) ^ (∀sub: seq<Z>)((sub ∈ res) <=> ((|sub| <= |l|) ^L (esSubseqOrdenadaSinRepetidos(sub, l))))}
+    pred esSubseqOrdenadaSinRepetidos(s,t: seq<Z>) {
+        (∀i: Z)((0 <= i < |s|-1) =>L (∃j,k: Z)((0 <= j,k < |t|) ^L ((s[i] = t[j]) ^ (s[i+1] = t[k]) ^ (j < k))))
+    }
 }
 
 12.a.
@@ -241,7 +214,8 @@ proc primoAnterior(in n: N, out p: N) {
 }
 proc primosHermanos(inout l: seq<Z>) {
     requiere {l = L0 ^ (∀i: Z)((0 <= i < |l|) => (l[i] > 2))}
-    asegura {(|l| = |L0|) ^ (∀i: Z)((0 <= i < |l|) =>L (l[i] = primoAnterior(L0[i])))}
+    asegura {(|l| = |L0|) ^ (∀i: Z)((0 <= i < |l|) =>L esPrimoAnterior(L0[i], l[i]))}
+    pred esPrimoAnterior(n,p: N) {esPrimo(p) ^ (p < n) ^ ¬(∃m: N)((p < m < n) ^L esPrimo(m))}
 }
 15.b.
 proc reemplazar(inout l: seq<Char>, in a,b: Char) {
@@ -257,5 +231,10 @@ proc limpiarDuplicados(inout l: seq<Char>, out dup: seq<Char>) {
         (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) > 1)) =>L (#apariciones(d, s[i]) = #apariciones(s, s[i]) - 1)) ^
         (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) <= 1)) =>L (#apariciones(d, s[i]) = 0))
     }
-    pred noFaltaNinguno(in s,t: seq<Char>) {(∀c: Char)((c ∈ t) => (c ∈ s))} /* La implicación inversa ya está implicita en esSubseqOrdenada */
+    pred noFaltaNinguno(s,t: seq<Char>) {(∀c: Char)((c ∈ t) => (c ∈ s))}
+    pred esSubseqOrdenada(s,t: seq<Char>) {
+        (∀i,j: Z)((0 <= i < j < |s|) =>L (∃k,l: Z)((0 <= k < l < |t|) ^L (
+            (s[i] = t[k]) ^ (s[j] = t[l]) ^ incluida(subseq(s, i, j+1), subseq(t, k, l+1))
+        )))
+    }
 }
