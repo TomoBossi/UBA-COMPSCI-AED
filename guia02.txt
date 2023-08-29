@@ -231,7 +231,7 @@ proc limpiarDuplicados(inout l: seq<Char>, out dup: seq<Char>) {
         (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) > 1)) =>L (#apariciones(d, s[i]) = #apariciones(s, s[i]) - 1)) ^
         (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) <= 1)) =>L (#apariciones(d, s[i]) = 0))
     }
-    pred noFaltaNinguno(s,t: seq<Char>) {(∀c: Char)((c ∈ t) => (c ∈ s))}
+    pred noFaltaNinguno(s,t: seq<Char>) {(∀c: Char)((c ∈ t) <=> (c ∈ s))}
     pred esSubseqOrdenada(s,t: seq<Char>) {
         (∀i,j: Z)((0 <= i < j < |s|) =>L (∃k,l: Z)((0 <= k < l < |t|) ^L (
             (s[i] = t[k]) ^ (s[j] = t[l]) ^ incluida(subseq(s, i, j+1), subseq(t, k, l+1))
