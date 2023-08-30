@@ -132,6 +132,7 @@ S ≡ a := a + s[i]
 wp(S, asegura) ≡ {(0 <= i < |s|) ^L (a + s[i] = Σ(j=0;i)(s[j]))} ≡
 {(0 <= i < |s|) ^L (a = Σ(j=0;i)(s[j]) - s[i])} ≡
 {(0 <= i < |s|) ^L (a = Σ(j=0;i-1)(s[j]))} /* requiere de enunciado */
+
 5.b.
 int restarPrimero(int[] s, int a) { /* int i innecesario */
     a -= s[0]; /* a := a - s[0] */ 
@@ -141,6 +142,7 @@ S ≡ a := a - s[0]
 wp(S, asegura) ≡ {(0 < |s|) ^L (0 <= i < |s|) ^L (a - s[0] = Σ(j=1;i)(s[j]))} ≡ /* obs: la sumatoria requiere agregar una condición sobre i, pero esto no es parte de lo que dice el método mecánico */ /* preguntar */
 {(0 <= i < |s|) ^L (a = Σ(j=1;i)(s[j]) + s[0])} ≡
 {(0 <= i < |s|) ^L (a = Σ(j=0;i)(s[j]))} /* requiere de enunciado */
+
 5.c.
 boolean elementoNoNegativo(int[] s, int i) {
     res = s[i] >= 0; /* res := s[i] >= 0 */
@@ -149,6 +151,7 @@ boolean elementoNoNegativo(int[] s, int i) {
 S ≡ res := s[i] >= 0
 wp(S, asegura) ≡ {(0 <= i < |s|) ^L ((s[i] >= 0) <=> (∀j: Z)((0 <= j <= i) =>L (s[j] >= 0)))} ≡
 {(0 <= i < |s|) ^L (∀j: Z)((0 <= j < i) =>L (s[j] >= 0))} /* requiere de enunciado */
+
 5.d.
 int incrementarSiElementoNoNulo(int[] s, int i, int a) {
     if (s[i] != 0) {
@@ -166,6 +169,7 @@ wp(S, asegura) ≡ {def(s[i] != 0) ^L (((s[i] != 0) ^ (a + 1 = Σ(j=0;i)(Beta(s[
 {(0 <= i < |s|) ^L (((s[i] != 0) ^ (a = Σ(j=0;i)(Beta(s[j] != 0)) - 1)) v ((s[i] = 0) ^ (a = Σ(j=0;i)(Beta(s[j] != 0)))))} ≡
 {(0 <= i < |s|) ^L (((s[i] != 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)))) v ((s[i] = 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)))))} ≡
 {(0 <= i < |s|) ^L (a = Σ(j=0;i-1)(Beta(s[j] != 0)))} /* requiere de enunciado */
+
 5.e.
 int incrementarSiPrimeroNoNulo(int[] s, int a) { /* int i innecesario */
     if (s[0] != 0) {
