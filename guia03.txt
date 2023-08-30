@@ -191,7 +191,7 @@ if (s[0] != 0)
 else
     skip
 endif
-wp(S, asegura) ≡ {def(s[0] != 0) ^L (0 <= i < |s|) ^L (((s[0] != 0) ^ (a + 1 = Σ(j=0;i-1)(Beta(s[j] != 0)))) v ((s[0] = 0) ^ (asegura)))} ≡ /* obs: la sumatoria requiere agregar una condición sobre i, pero esto no es parte de lo que dice el método mecánico */
+wp(S, asegura) ≡ {def(s[0] != 0) ^L (0 <= i < |s|) ^L (((s[0] != 0) ^ (a + 1 = Σ(j=0;i-1)(Beta(s[j] != 0)))) v ((s[0] = 0) ^ (asegura)))} ≡
 {(0 < |s|) ^L (((s[0] != 0) ^ (a + 1 = Σ(j=0;i-1)(Beta(s[j] != 0)))) v ((s[0] = 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)))))} ≡
 {(0 < |s|) ^L (((s[0] != 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)) - 1)) v ((s[0] = 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)))))} ≡
 {(0 < |s|) ^L (((s[0] != 0) ^ (a = Σ(j=1;i-1)(Beta(s[j] != 0)))) v ((s[0] = 0) ^ (a = Σ(j=1;i-1)(Beta(s[j] != 0)))))} ≡
