@@ -201,7 +201,7 @@ requiere => wp(S, asegura) ≡ ((0 <= i < |s|) ^L (a = Σ(j=1;i-1)(Beta(s[j] != 
 El programa es correcto, pues el requiere del enunciado implica a la wp(S, asegura) encontrada.
 
 ###
-Teorema de corrección de un ciclo:
+Teorema de corrección de un ciclo
 El teorema dice que un ciclo termina y es correcto respecto de su especificación si:
 1. P_c => I (I vale antes del ciclo)
 2. {I ^ B} S {I} (el invariante sigue valiendo después de cada iteración del ciclo, y la wp del programa dentro del ciclo implica (I ^ B), lo que a su vez implica que I debe valer al comienzo de cada iteración)
@@ -209,9 +209,9 @@ El teorema dice que un ciclo termina y es correcto respecto de su especificació
 4. {I ^ B ^ v0 = fv} S {fv < v0} (la función variante disminuye en valor en cada iteración del ciclo)
 5. (I ^ fv <= 0) => ¬B (el ciclo termina cuando la función variante se hace no positiva)
 Donde B es la condición del ciclo, S el programa ejecutado dentro del ciclo, y P_c, Q_c son la pre y postcondición del ciclo, respectivamente.
-Obs.: El teorema requiere de la aplicación del teorema del invariante (1-3) y el teorema de terminación de ciclo (4-5). El teorema de terminación nos asegura que el ciclo termina, condición necesaria para que valga el teorema del invariante, que asegura la correctitud del ciclo, es decir la validez de la tripla de Hoare {P_c} while B do S endwhile {Q_c}
+Obs.: El teorema requiere de la aplicación del teorema del invariante (1-3) y el teorema de terminación de ciclo (4-5). El teorema de terminación nos asegura que el ciclo termina, condición necesaria para que valga el teorema del invariante, que asegura la correctitud del ciclo, es decir la validez de la tripla de Hoare {P_c} while B do S endwhile {Q_c}.
 Obs.: No hay método mecánico para derivar el invariante, I, ni la función variante, fv. Si el ciclo es parte intermedia de un programa más grande (como casi siempre lo és) tampoco hay método mecánico para definir cuál es su precondición, P_c.
-Obs.: No nos permite encontrar la wp del ciclo, sólo demostrar que la P_c propuesta o dada implica la wp del ciclo (demostrando por lo tanto la validez de la tripla)
+Obs.: No nos permite encontrar la wp del ciclo, sólo demostrar que la P_c propuesta o dada implica la wp del ciclo (demostrando por lo tanto la validez de la tripla).
 ###
 
 6.a.
