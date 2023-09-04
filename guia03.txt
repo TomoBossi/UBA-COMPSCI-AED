@@ -87,7 +87,8 @@ wp(s[0] := 0, Q) ≡ wp(s := setAt(s,0,0), Q) ≡
 {(0 < |s|) ^L (∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0))} ≡
 {(∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0))}
 wp(S, Q) ≡ {def(i > 0) ^L (((i > 0) ^ ((0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |A|) ^ (j != i)) =>L (s[j] >= 0)))) v ((i <= 0) ^ (∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0))))} ≡
-{(((1 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0))) v ((i <= 0) ^ (∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0))))} /* muy largo */ /* preguntar */
+{((1 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0))) v ((i <= 0) ^ (∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0)))} ≡ /* todos salvo s[i] tienen que ser >= 0 v todos salvo s[0 = i] tienen que ser >= 0 */
+{(0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0))}
 
 4.d.
 wp(s[i] := s[i-1], Q) ≡ wp(s := setAt(s,i,s[i-1]), Q) ≡
@@ -116,7 +117,7 @@ wp(S, Q) ≡ {def(s[i] < 0) ^L (((s[i] < 0) ^ ((0 <= i < |s|) ^L (s[i] <= 0))) v
 wp(s[i] := -s[i], Q) ≡ wp(s := setAt(s,i,-s[i]), Q) ≡
 {(0 <= i < |s|) ^L (∀j: Z)((0 <= j < |setAt(s,i,-s[i])|) =>L (setAt(s,i,-s[i])[j] >= 0))} ≡
 {(0 <= i < |s|) ^L (∀j: Z)((0 <= j < |s|) =>L (setAt(s,i,-s[i])[j] >= 0))} ≡
-{(0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0)) ^ (s[i] <= 0)} ≡
+{(0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0)) ^ (s[i] <= 0)}
 wp(skip, Q) ≡ {Q}
 wp(S, Q) ≡ {def(s[i] > 0) ^L (((s[i] > 0) ^ ((0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0)) ^ (s[i] <= 0))) v ((s[i] <= 0) ^ ((∀j: Z)((0 <= j < |s|) =>L (s[j] >= 0)))))} ≡
 {(0 <= i < |s|) ^L (((s[i] > 0) ^ (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0)) ^ (s[i] <= 0)) v ((s[i] <= 0) ^ (∀j: Z)((0 <= j < |s|) =>L (s[j] >= 0))))} ≡
@@ -198,3 +199,112 @@ wp(S, asegura) ≡ {def(s[0] != 0) ^L (0 <= i < |s|) ^L (((s[0] != 0) ^ (a + 1 =
 {(0 < |s|) ^L (a = Σ(j=1;i-1)(Beta(s[j] != 0)))}
 requiere => wp(S, asegura) ≡ ((0 <= i < |s|) ^L (a = Σ(j=1;i-1)(Beta(s[j] != 0)))) => ((0 < |s|) ^L (a = Σ(j=1;i-1)(Beta(s[j] != 0)))) ≡ True
 El programa es correcto, pues el requiere del enunciado implica a la wp(S, asegura) encontrada.
+
+###
+Teorema de corrección de un ciclo:
+El teorema dice que un ciclo termina y es correcto respecto de su especificación si:
+1. P_c => I (I vale antes del ciclo)
+2. {I ^ B} S {I} (el invariante sigue valiendo después de cada iteración del ciclo, y la wp del programa dentro del ciclo implica (I ^ B), lo que a su vez implica que I debe valer al comienzo de cada iteración)
+3. (I ^ ¬B) => Q_c (I vale después del ciclo)
+4. {I ^ B ^ v0 = fv} S {fv < v0} (la función variante disminuye en valor en cada iteración del ciclo)
+5. (I ^ fv <= 0) => ¬B (el ciclo termina cuando la función variante se hace no positiva)
+Donde B es la condición del ciclo, S el programa ejecutado dentro del ciclo, y P_c, Q_c son la pre y postcondición del ciclo, respectivamente.
+Obs.: El teorema requiere de la aplicación del teorema del invariante (1-3) y el teorema de terminación de ciclo (4-5). El teorema de terminación nos asegura que el ciclo termina, condición necesaria para que valga el teorema del invariante, que asegura la correctitud del ciclo, es decir la validez de la tripla de Hoare {P_c} while B do S endwhile {Q_c}
+Obs.: No hay método mecánico para derivar el invariante, I, ni la función variante, fv. Si el ciclo es parte intermedia de un programa más grande (como casi siempre lo és) tampoco hay método mecánico para definir cuál es su precondición, P_c.
+Obs.: No nos permite encontrar la wp del ciclo, sólo demostrar que la P_c propuesta o dada implica la wp del ciclo (demostrando por lo tanto la validez de la tripla)
+###
+
+6.a.
+P_c ≡ {res = 0 ^ i = 0}
+Q_c ≡ {res = Σ(j=0;|s|-1)(s[j])}
+6.b.
+- El invariante no valdría después del ciclo (fallaría el punto 3)
+- El invariante no valdría después de la última iteración del ciclo (fallaría el punto 2)
+6.c.
+Ese cambio haría que el invariante pueda indefinirse.
+- El invariante no valdría después del ciclo (fallaría el punto 3)
+- El invariante no valdría después de la última iteración del ciclo (fallaría el punto 2)
+6.d.
+- El invariante no valdría después del ciclo (fallaría el punto 3)
+- El invariante no valdría después de cada iteración del ciclo (fallaría el punto 2)
+
+6.e.
+1. QVQ P_c => I ≡ {(res = 0 ^ i = 0) => (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]))} ≡ True /* Cuando los extremos no son válidos la sumatoria da 0, la productoria 1 */
+2. QVQ (I ^ B) => wp(S, I)
+Con S ≡
+res := res + s[i];
+i := i + 1;
+wp(i := i + 1, I) ≡ {0 <= i+1 <= |s| ^L res = Σ(j=0;i)(s[j])} ≡ {Q}
+wp(res := res + s[i], Q) ≡ {(0 <= i < |s|) ^L (0 <= i+1 <= |s| ^L res + s[i] = Σ(j=0;i)(s[j]))} ≡ {0 <= i < |s| ^L res = Σ(j=0;i)(s[j]) - s[i]} ≡
+{0 <= i < |s| ^L res = Σ(j=0;i-1)(s[j])} ≡ wp(S, I)
+QVQ (I ^ B) => wp(S, I) ≡ (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]) ^ i < |s|) => (0 <= i < |s| ^L res = Σ(j=0;i-1)(s[j])) ≡ True
+3. QVQ (I ^ ¬B) => Q_c ≡ (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]) ^ i >= |s|) => (res = Σ(j=0;|s|-1)(s[j])) ≡
+(i = |s| ^L res = Σ(j=0;i-1)(s[j])) => (res = Σ(j=0;|s|-1)(s[j])) ≡ True
+
+6.f.
+fv = |s| - i
+4. QVQ (I ^ B ^ v0 = fv) => wp(S, (|s| - i < v0))
+wp(i := i + 1, (|s| - i < v0)) ≡ {|s| - i - 1 < v0} ≡ {Q}
+wp(res := res + s[i], Q) ≡ {(0 <= i < |s|) ^L (|s| - i - 1 < v0)} ≡ wp(S, (|s| - i < v0))
+QVQ (I ^ B ^ v0 = fv) => wp(S, (|s| - i < v0)) ≡ (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]) ^ i < |s| ^ v0 = fv) => ((0 <= i < |s|) ^L (fv < v0 + 1)) ≡ True
+5. QVQ (I ^ fv <= 0) => ¬B ≡ (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]) ^ i >= |s|) => (i >= |s|) ≡ True /* fv = |s| - i <= 0 <=> i >= |s| */ 
+
+7.
+P_c = {n >= 0 ^ res = 0 ^ i = 0}
+Q_c = asegura = {res = Σ(j=0;n-1)(if j%2=0 then j else 0 fi)}
+B = (i < n)
+S ≡
+res := res + i;
+i := i + 2;
+I = ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi))
+fv = n - i
+Por el teorema de corrección de un ciclo,
+1. QVQ P_c => I ≡ (n >= 0 ^ res = 0 ^ i = 0) => ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) ≡ True
+2. QVQ (I ^ B) => wp(S, I)
+wp(i := i + 2, I) ≡ {(0 <= i + 2 <= n + 1) ^ (i+2)%2=0 ^ res = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)} ≡
+{(0 <= i + 2 <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)} ≡ {Q}
+wp(res := res + i, Q) ≡ {(0 <= i + 2 <= n + 1) ^ i%2=0 ^ res + i = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)} ≡ wp(S, I)
+QVQ (I ^ B) => wp(S, I) ≡ ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i < n) => ((0 <= i + 2 <= n + 1) ^ i%2=0 ^ res + i = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)) ≡
+((0 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => ((0 <= i + 2 <= n + 1) ^ i%2=0 ^ res + i = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)) ≡
+((0 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => ((-2 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i+1)(if j%2=0 then j else 0 fi) - i) ≡
+((0 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => ((-2 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i)(if j%2=0 then j else 0 fi) - i) ≡
+((0 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => ((-2 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) ≡ True
+3. QVQ (I ^ ¬B) => Q_c ≡ ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i >= n) => (res = Σ(j=0;n-1)(if j%2=0 then j else 0 fi)) ≡
+((n <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => (res = Σ(j=0;n-1)(if j%2=0 then j else 0 fi)) ≡ True /* i es n o n+1, en cualquier caso la sumatoria da lo mismo */
+4. QVQ (I ^ B ^ v0 = fv) => wp(S, (n - i < v0))
+wp(i := i + 2, (n - i < v0)) ≡ {n - i - 2 < v0}
+wp(res := res + i, (n - i - 2 < v0)) ≡ {n - i - 2 < v0)}
+QVQ (I ^ B ^ v0 = fv) => wp(S, (n - i < v0)) ≡ ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i < n ^ v0 = fv) => (n - i - 2 < v0) ≡
+((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i < n ^ v0 = fv) => (fv < v0 + 2) ≡ True
+5. QVQ (I ^ fv <= 0) => ¬B ≡ ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i >= n) => (i >= n) ≡ True /* fv = n - i <= 0 <=> i >= n */
+
+8.a.
+S ≡
+i := 0;
+res := 0;
+while (i <= n) do
+    if (n%i=0) then
+        res := res + i
+    else
+        skip
+    endif;
+    i := i + 1
+endwhile;
+8.b.
+No puede ser demostrado mediante el invariante propuesto:
+- Antes del ciclo el invariante requiere i >= 1 y en el programa i comienza en 0.
+- Al final del ciclo el inviariante requiere i <= n y en el programa i termina valiendo n + 1.
+Con estas consideraciones, el invariante correspondiente al ciclo propuesto es:
+I = ((0 <= i <= n+1) ^ res = Σ(j=1;i)(if n%j=0 then j else 0 fi))
+
+9.a.
+P_c = {(|s| = |r|) ^ (r = r0) ^ (i = 0)}
+Q_c = asegura = {(|s| = |r|) ^L (∀j: Z)((0 <= j < |s|) =>L (s[j] = r[j]))}
+B = (i < |s|)
+S ≡
+r := setAt(r, i, s[i]);
+i := i + 1;
+9.b.
+I = ((0 <= i <= |s|) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j])))
+9.c.
+fv = |s| - i
