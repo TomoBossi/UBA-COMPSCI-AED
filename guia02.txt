@@ -1,310 +1,240 @@
-Tomando def(x) = True para toda x variable o constante,
-
 1.a.
-def(a + 1) ≡ True
+pred esCuadrado(x: Z) {(∃n: N)(n^2 = x)}
 1.b.
-def(a/b) ≡ (b != 0)
+pred esPrimo(x: Z) {x > 1 ^ ¬(∃n: N)((1 < n < x) ^L (x mod n = 0))}
 1.c.
-def(sqrt(a/b)) ≡ ((b != 0) ^L (a/b >= 0))
+pred sonCoprimos(x,y: Z) {¬(∃n: N)(((1 < n < x) ^ (1 < n < y)) ^L (x mod n = 0 ^ y mod n = 0))}
 1.d.
-def(A[i] + 1) ≡ (0 <= i < |A|)
-1.e.
-def(A[i+2]) ≡ (0 <= i+2 < |A|)
-1.f.
-def((0 <= i <= |A|) ^L (A[i] >= 0)) ≡ (i != |A|)
+pred mayorPrimoQueDivide(x,y: Z) {(x mod y = 0) ^ esPrimo(y) ^ ¬(∃n: N)((y < n <= x) ^L (esPrimo(n) ^ x mod n = 0))}
 
 2.a.
-{wp(a := a+1, Q2)} ≡ {def(a + 1) ^L a + 1 >= 0} ≡ {Q3} ≡ {a >= -1}
-a := a+1
-{wp(b := a/2, Q1)} ≡ {def(a/2) ^L a/2 >= 0} ≡ {True ^L a/2 >= 0} ≡ {Q2} ≡ {a >= 0} 
-b := a/2
-{Q1} ≡ {b >= 0}
+pred esPrefijo(s0,s1: seq<T>) {(|s0| <= |s1|) ^L ((∀i: Z)(0 <= i < |s0| =>L (s0[i] = s1[i])))}
 2.b.
-wp(a := A[i] + 1, Q2) ≡ {Q3} ≡ {(0 <= i < |A|) ^L ((A[i] != sqrt(2)) - 1 ^ (A[i] != -sqrt(2) - 1))} 
-a := A[i] + 1
-wp(b := a*a, Q1) ≡ {Q2} ≡ {a*a != 2} ≡ {|a| != sqrt(2)} ≡ {a != sqrt(2) ^ a != -sqrt(2)}
-b := a*a
-{Q1} ≡ {b != 2}
+pred estaOrdenada(s: seq<T>) {(∀i: Z)(0 <= i < |s|-1 =>L (s[i] < s1[i+1]))}
 2.c.
-wp(a := A[i] + 1, Q2) ≡ {Q3} ≡ {(0 <= i < |A|) ^L (b != 0)}
-a := A[i] + 1
-wp(a := b*b, Q1) ≡ {b*b >= 0} ≡ {Q2} ≡ {b != 0}
-a := b*b
-{Q1} ≡ {a >= 0}
+pred hayUnoParQueDivideAlResto(s: seq<T>) {(∃i: Z)(0 <= i < |s| =>L ((s[i] mod 2 = 0) ^ (∀j: Z)((0 <= j < |s| ^ i != j) =>L (s[j] mod s[i] = 0))))}
 2.d.
-wp(a := a - b, Q2) ≡ {(a - b >= 0) ^ (a - b + b >= 0)} ≡ {Q3} ≡ {(a >= 0) ^ (a >= b)}
-a := a - b
-wp(b := a + b, Q1) ≡ {Q2} ≡ {(a >= 0) ^ (a + b >= 0)}
-b := a + b
-{Q1} ≡ {a >= 0 ^ b >= 0}
+pred sinRepetidos(s: seq<T>) {(∀e: T)(#apariciones(s, e) <= 1)}
+2.e.
+pred enTresPartes(s: seq<Z>) {((|s| >= 3) ^L (s[0] = 0 ^ s[|s|-1] = 2)) ^ (∀i: Z)(0 <= i < |s|-1 =>L ((s1[i+1] = s[i]) v (s[i+1] = s[i] + 1)))}
+pred enTresPartes(s: seq<Z>) {(s = <>) vL (((|s| > 0) ^L (s[0] >= 0 ^ s[|s|-1] <= 2)) ^ (∀i: Z)(0 <= i < |s|-1 =>L ((s1[i+1] = s[i]) v (s[i+1] = s[i] + 1))))}
 
 3.a.
-wp(A[i] := 0, Q) ≡ wp(A := setAt(A,i,0), Q) ≡
-{(0 <= i < |A|) ^L (∀j: Z)((0 < j < |setAt(A,i,0)|) =>L (setAt(A,i,0)[j] >= 0))} ≡
-{(0 <= i < |A|) ^L (∀j: Z)(((0 < j < |A|) ^ (j != i)) =>L (A[j] >= 0))}
-
+aux #apariciones(in s: seq<T>, in e: T): N = Σ(i=0;|s|-1)(if s[i] = e then 1 else 0 fi);
 3.b.
-wp(A[i+2] := 0, Q) ≡ wp(A := setAt(A,i+2,0), Q) ≡
-{(-2 <= i < |A|-2) ^L (∀j: Z)((0 < j < |setAt(A,i+2,0)|) =>L (setAt(A,i+2,0)[j] >= 0))} ≡
-{(-2 <= i < |A|-2) ^L (∀j: Z)(((0 < j < |A|) ^ (j != i+2)) =>L (A[j] >= 0))}
-
+aux sumaPosImpares(in s: seq<R>): R = Σ(i=0;|s|-1)(if (i mod 2 = 1) then s[i] else 0 fi);
 3.c.
-wp(A[i+2] := -1, Q) ≡ wp(A := setAt(A,i+2,-1), Q) ≡ {False}
-
+aux sumaPositivos(in s: seq<R>): R = Σ(i=0;|s|-1)(if s[i] > 0 then s[i] else 0 fi);
 3.d.
-wp(A[i] := 2*A[i], Q) ≡ wp(A := setAt(A,i,2*A[i]), Q) ≡
-{(0 <= i < |A|) ^L (∀j: Z)((0 < j < |setAt(A,i,2*A[i])|) =>L (setAt(A,i,2*A[i])[j] >= 0))} ≡
-{(0 <= i < |A|) ^L (∀j: Z)((0 < j < |A|) =>L (A[j] >= 0))}
-
-3.e.
-wp(A[i] := A[i-1], Q) ≡ wp(A := setAt(A,i,A[i-1]), Q) ≡
-{(1 <= i < |A|) ^L (∀j: Z)((0 < j < |setAt(A,i,A[i-1])|) =>L (setAt(A,i,A[i-1])[j] >= 0))} ≡
-{(1 <= i < |A|) ^L (∀j: Z)(((0 < j < |A|) ^ (j != i)) =>L (A[j] >= 0))}
+aux sumaInversos(in s: seq<R>): R = Σ(i=0;|s|-1)(if s[i] != 0 then 1/s[i] else 0 fi);
 
 4.a.
-wp(b := a, Q) ≡ {a = -|a|} ≡ {a <= 0}
-wp(b := -a, Q) ≡ {-a = -|a|} ≡ {a >= 0}
-wp(S, Q) ≡ {def(a < 0) ^L (((a < 0) ^ wp(b := a, Q)) v ((a >= 0) ^ wp(b := -a, Q)))} ≡
-{((a < 0) ^ wp(b := a, Q)) v ((a >= 0) ^ wp(b := -a, Q))} ≡
-{((a < 0) ^ (a <= 0)) v ((a >= 0) ^ (a >= 0))} ≡
-{(a < 0) v (a >= 0)} ≡
-{True}
-
+Error de índice cuando i = 0.
+proc progresionGeometricaFactor2(in l: seq<Z>, out res: Bool) {
+    requiere {True}
+    asegura {res = True <=> ((∀i: Z)(0 < i < |l| =>L l[i] = 2 * l[i-1]))}
+}
 4.b.
-wp(b := a, Q) ≡ {a = |a|} ≡ {a >= 0}
-wp(b := -a, Q) ≡ {-a = |a|} ≡ {a <= 0}
-wp(S, Q) ≡ {def(a < 0) ^L (((a < 0) ^ wp(b := a, Q)) v ((a >= 0) ^ wp(b := -a, Q)))} ≡
-{((a < 0) ^ (a >= 0)) v ((a >= 0) ^ (a <= 0))} ≡
-{False v (a = 0)} ≡
-{a = 0}
-
-4.c.
-wp(s[i] := 0, Q) ≡ wp(s := setAt(s,i,0), Q) ≡
-{(0 <= i < |s|) ^L (∀j: Z)((0 <= j < |setAt(s,i,0)|) =>L (setAt(s,i,0)[j] >= 0))} ≡
-{(0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0))}
-wp(s[0] := 0, Q) ≡ wp(s := setAt(s,0,0), Q) ≡
-{(0 < |s|) ^L (∀j: Z)((0 <= j < |setAt(s,0,0)|) =>L (setAt(s,0,0)[j] >= 0))} ≡
-{(0 < |s|) ^L (∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0))} ≡
-{(∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0))}
-wp(S, Q) ≡ {def(i > 0) ^L (((i > 0) ^ ((0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |A|) ^ (j != i)) =>L (s[j] >= 0)))) v ((i <= 0) ^ (∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0))))} ≡
-{((1 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0))) v ((i <= 0) ^ (∀j: Z)((1 <= j < |s|) =>L (s[j] >= 0)))} ≡ /* todos salvo s[i] tienen que ser >= 0 v todos salvo s[0 = i] tienen que ser >= 0 */
-{(0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0))}
-
-4.d.
-wp(s[i] := s[i-1], Q) ≡ wp(s := setAt(s,i,s[i-1]), Q) ≡
-{(1 <= i < |s|) ^L (∀j: Z)((0 <= j < |setAt(s,i,s[i-1]|) =>L (setAt(s,i,s[i-1])[j] = setAt(s,i,s[i-1])[j-1]))} ≡
-{(1 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = s[i-1]))}
-wp(s[i] := 0, Q) ≡ wp(s := setAt(s,i,0), Q) ≡
-{(0 <= i < |s|) ^L (∀j: Z)((0 <= j < |setAt(s,i,0)|) =>L (setAt(s,i,0)[j] = setAt(s,i,0)[j-1]))} ≡
-{(0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = 0))}
-wp(S, Q) ≡ {def(i > 1) ^L (((i > 1) ^ ((1 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = s[i-1])))) v ((i <= 1) ^ ((0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = 0)))))} ≡
-{((2 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = s[i-1]))) v ((0 <= i < 2) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = 0)))} /* muy largo */ /* preguntar */
-
-4.e.
-wp(s[i] := -s[i], Q) ≡ wp(s := setAt(s,i,-s[i]), Q) ≡
-{(0 <= i < |s|) ^L (0 <= i < |setAt(s,i,-s[i]|) ^L (setAt(s,i,-s[i])[i] >= 0)} ≡
-{(0 <= i < |s|) ^L (0 <= i < |s|) ^L (s[i] <= 0)} ≡
-{(0 <= i < |s|) ^L (s[i] <= 0)}
-wp(skip, Q) ≡ {Q}
-wp(S, Q) ≡ {def(s[i] < 0) ^L (((s[i] < 0) ^ ((0 <= i < |s|) ^L (s[i] <= 0))) v ((s[i] >= 0) ^ ((0 <= i < |s|) ^L (s[i] >= 0))))} ≡
-{(0 <= i < |s|) ^L (((s[i] < 0) ^ ((0 <= i < |s|) ^L (s[i] <= 0))) v ((s[i] >= 0) ^ ((0 <= i < |s|) ^L (s[i] >= 0))))} ≡
-{(0 <= i < |s|) ^L (((s[i] < 0) ^ (s[i] <= 0)) v ((s[i] >= 0) ^ (s[i] >= 0)))} ≡
-{(0 <= i < |s|) ^L ((s[i] < 0) v (s[i] >= 0))} ≡
-{(0 <= i < |s|) ^L True)} ≡
-{0 <= i < |s|}
-
-4.f.
-wp(s[i] := -s[i], Q) ≡ wp(s := setAt(s,i,-s[i]), Q) ≡
-{(0 <= i < |s|) ^L (∀j: Z)((0 <= j < |setAt(s,i,-s[i])|) =>L (setAt(s,i,-s[i])[j] >= 0))} ≡
-{(0 <= i < |s|) ^L (∀j: Z)((0 <= j < |s|) =>L (setAt(s,i,-s[i])[j] >= 0))} ≡
-{(0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0)) ^ (s[i] <= 0)}
-wp(skip, Q) ≡ {Q}
-wp(S, Q) ≡ {def(s[i] > 0) ^L (((s[i] > 0) ^ ((0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0)) ^ (s[i] <= 0))) v ((s[i] <= 0) ^ ((∀j: Z)((0 <= j < |s|) =>L (s[j] >= 0)))))} ≡
-{(0 <= i < |s|) ^L (((s[i] > 0) ^ (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0)) ^ (s[i] <= 0)) v ((s[i] <= 0) ^ (∀j: Z)((0 <= j < |s|) =>L (s[j] >= 0))))} ≡
-{(0 <= i < |s|) ^L (False v ((s[i] <= 0) ^ (∀j: Z)((0 <= j < |s|) =>L (s[j] >= 0))))} ≡
-{(0 <= i < |s|) ^L ((s[i] = 0) ^ (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] >= 0)))}
-
-5.a.
-int sumarElemento(int[] s, int i, int a) {
-    a += s[i]; /* a := a + s[i] */ 
-    return a;
+Usa una variable o constante x inexistente o indefinida, 
+nunca dice que res es algún valor de la secuencia, 
+no pide que la secuencia sea no vacía.
+proc minimo(in l: seq<Z>, out res: Z) {
+    requiere {|l| > 0}
+    asegura {res ∈ l ^ (∀y: Z)((y ∈ l ^ y != res) => y > res)}
 }
-S ≡ a := a + s[i]
-wp(S, asegura) ≡ {(0 <= i < |s|) ^L (a + s[i] = Σ(j=0;i)(s[j]))} ≡
-{(0 <= i < |s|) ^L (a = Σ(j=0;i)(s[j]) - s[i])} ≡
-{(0 <= i < |s|) ^L (a = Σ(j=0;i-1)(s[j]))} 
-requiere => wp(S, asegura) ≡ requiere => requiere ≡ True
-El programa es correcto, pues wp(S, asegura) es exactamente el requiere del enunciado.
 
-5.b.
-int restarPrimero(int[] s, int a) { /* int i innecesario */
-    a -= s[0]; /* a := a - s[0] */ 
-    return a;
-}
-S ≡ a := a - s[0]
-wp(S, asegura) ≡ {(0 < |s|) ^L (a - s[0] = Σ(j=1;i)(s[j]))} ≡
-{(0 < |s|) ^L (a = Σ(j=1;i)(s[j]) + s[0])} ≡
-{(0 < |s|) ^L (a = Σ(j=0;i)(s[j]))}
-requiere => wp(S, asegura) ≡ ((0 <= i < |s|) ^L (a = Σ(j=0;i)(s[j]))) => ((0 < |s|) ^L (a = Σ(j=0;i)(s[j]))) ≡ True
-El programa es correcto, pues el requiere del enunciado implica a la wp(S, asegura) encontrada.
-
+5.a.I.
+{3}
+5.a.II.
+{0, 5}
+5.a.III.
+{0, 1, 2, 3, 4, 5}
+5.b.I.
+{3}
+5.b.II.
+{0}
+5.b.III.
+{0}
 5.c.
-boolean elementoNoNegativo(int[] s, int i) {
-    res = s[i] >= 0; /* res := s[i] >= 0 */
-    return res; 
-}
-S ≡ res := s[i] >= 0
-wp(S, asegura) ≡ {(0 <= i < |s|) ^L ((s[i] >= 0) <=> (∀j: Z)((0 <= j <= i) =>L (s[j] >= 0)))} ≡
-{(0 <= i < |s|) ^L (∀j: Z)((0 <= j < i) =>L (s[j] >= 0))}
-requiere => wp(S, asegura) ≡ requiere => requiere ≡ True
-El programa es correcto, pues wp(S, asegura) es exactamente el requiere del enunciado.
-
-5.d.
-int incrementarSiElementoNoNulo(int[] s, int i, int a) {
-    if (s[i] != 0) {
-        a += 1; /* a := a + 1 */
-    } /* else {skip} */
-    return a;
-}
-S ≡
-if (s[i] != 0)
-    a := a + 1
-else
-    skip
-endif
-wp(S, asegura) ≡ {def(s[i] != 0) ^L (((s[i] != 0) ^ (a + 1 = Σ(j=0;i)(Beta(s[j] != 0)))) v ((s[i] = 0) ^ (asegura)))} ≡
-{(0 <= i < |s|) ^L (((s[i] != 0) ^ (a = Σ(j=0;i)(Beta(s[j] != 0)) - 1)) v ((s[i] = 0) ^ (a = Σ(j=0;i)(Beta(s[j] != 0)))))} ≡
-{(0 <= i < |s|) ^L (((s[i] != 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)))) v ((s[i] = 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)))))} ≡
-{(0 <= i < |s|) ^L (a = Σ(j=0;i-1)(Beta(s[j] != 0)))}
-requiere => wp(S, asegura) ≡ requiere => requiere ≡ True
-El programa es correcto, pues wp(S, asegura) es exactamente el requiere del enunciado.
-
-5.e.
-int incrementarSiPrimeroNoNulo(int[] s, int a) { /* int i innecesario */
-    if (s[0] != 0) {
-        a += 1; /* a := a + 1 */
-    } /* else {skip} */
-    return a;
-}
-S ≡
-if (s[0] != 0)
-    a := a + 1
-else
-    skip
-endif
-wp(S, asegura) ≡ {def(s[0] != 0) ^L (0 <= i < |s|) ^L (((s[0] != 0) ^ (a + 1 = Σ(j=0;i-1)(Beta(s[j] != 0)))) v ((s[0] = 0) ^ (asegura)))} ≡
-{(0 < |s|) ^L (((s[0] != 0) ^ (a + 1 = Σ(j=0;i-1)(Beta(s[j] != 0)))) v ((s[0] = 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)))))} ≡
-{(0 < |s|) ^L (((s[0] != 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)) - 1)) v ((s[0] = 0) ^ (a = Σ(j=0;i-1)(Beta(s[j] != 0)))))} ≡
-{(0 < |s|) ^L (((s[0] != 0) ^ (a = Σ(j=1;i-1)(Beta(s[j] != 0)))) v ((s[0] = 0) ^ (a = Σ(j=1;i-1)(Beta(s[j] != 0)))))} ≡
-{(0 < |s|) ^L (a = Σ(j=1;i-1)(Beta(s[j] != 0)))}
-requiere => wp(S, asegura) ≡ ((0 <= i < |s|) ^L (a = Σ(j=1;i-1)(Beta(s[j] != 0)))) => ((0 < |s|) ^L (a = Σ(j=1;i-1)(Beta(s[j] != 0)))) ≡ True
-El programa es correcto, pues el requiere del enunciado implica a la wp(S, asegura) encontrada.
-
-###
-Teorema de corrección de un ciclo:
-El teorema dice que un ciclo termina y es correcto respecto de su especificación si:
-1. P_c => I (I vale antes del ciclo)
-2. {I ^ B} S {I} (el invariante sigue valiendo después de cada iteración del ciclo, y la wp del programa dentro del ciclo implica (I ^ B), lo que a su vez implica que I debe valer al comienzo de cada iteración)
-3. (I ^ ¬B) => Q_c (I vale después del ciclo)
-4. {I ^ B ^ v0 = fv} S {fv < v0} (la función variante disminuye en valor en cada iteración del ciclo)
-5. (I ^ fv <= 0) => ¬B (el ciclo termina cuando la función variante se hace no positiva)
-Donde B es la condición del ciclo, S el programa ejecutado dentro del ciclo, y P_c, Q_c son la pre y postcondición del ciclo, respectivamente.
-Obs.: El teorema requiere de la aplicación del teorema del invariante (1-3) y el teorema de terminación de ciclo (4-5). El teorema de terminación nos asegura que el ciclo termina, condición necesaria para que valga el teorema del invariante, que asegura la correctitud del ciclo, es decir la validez de la tripla de Hoare {P_c} while B do S endwhile {Q_c}
-Obs.: No hay método mecánico para derivar el invariante, I, ni la función variante, fv. Si el ciclo es parte intermedia de un programa más grande (como casi siempre lo és) tampoco hay método mecánico para definir cuál es su precondición, P_c.
-Obs.: No nos permite encontrar la wp del ciclo, sólo demostrar que la P_c propuesta o dada implica la wp del ciclo (demostrando por lo tanto la validez de la tripla)
-###
+Para los casos donde hay una única aparición del máximo absoluto.
 
 6.a.
-P_c ≡ {res = 0 ^ i = 0}
-Q_c ≡ {res = Σ(j=0;|s|-1)(s[j])}
+Incorrecta por asegurar simultaneidad de condiciones mutuamente excluyentes (el asegura es una contradicción).
 6.b.
-- El invariante no valdría después del ciclo (fallaría el punto 3)
-- El invariante no valdría después de la última iteración del ciclo (fallaría el punto 2)
+Correcta
 6.c.
-Ese cambio haría que el invariante pueda indefinirse.
-- El invariante no valdría después del ciclo (fallaría el punto 3)
-- El invariante no valdría después de la última iteración del ciclo (fallaría el punto 2)
+Incorrecta por asegurar que res puede efectivamente valer cualquier cosa (el asegura es una tautología).
 6.d.
-- El invariante no valdría después del ciclo (fallaría el punto 3)
-- El invariante no valdría después de cada iteración del ciclo (fallaría el punto 2)
+Correcta
 
-6.e.
-1. QVQ P_c => I ≡ {(res = 0 ^ i = 0) => (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]))} ≡ True /* Cuando los extremos no son válidos la sumatoria da 0, la productoria 1 */
-2. QVQ (I ^ B) => wp(S, I)
-Con S ≡
-res := res + s[i];
-i := i + 1;
-wp(i := i + 1, I) ≡ {0 <= i+1 <= |s| ^L res = Σ(j=0;i)(s[j])} ≡ {Q}
-wp(res := res + s[i], Q) ≡ {(0 <= i < |s|) ^L (0 <= i+1 <= |s| ^L res + s[i] = Σ(j=0;i)(s[j]))} ≡ {0 <= i < |s| ^L res = Σ(j=0;i)(s[j]) - s[i]} ≡
-{0 <= i < |s| ^L res = Σ(j=0;i-1)(s[j])} ≡ wp(S, I)
-QVQ (I ^ B) => wp(S, I) ≡ (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]) ^ i < |s|) => (0 <= i < |s| ^L res = Σ(j=0;i-1)(s[j])) ≡ True
-3. QVQ (I ^ ¬B) => Q_c ≡ (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]) ^ i >= |s|) => (res = Σ(j=0;|s|-1)(s[j])) ≡
-(i = |s| ^L res = Σ(j=0;i-1)(s[j])) => (res = Σ(j=0;|s|-1)(s[j])) ≡ True
-
-6.f.
-fv = |s| - i
-4. QVQ (I ^ B ^ v0 = fv) => wp(S, (|s| - i < v0))
-wp(i := i + 1, (|s| - i < v0)) ≡ {|s| - i - 1 < v0} ≡ {Q}
-wp(res := res + s[i], Q) ≡ {(0 <= i < |s|) ^L (|s| - i - 1 < v0)} ≡ wp(S, (|s| - i < v0))
-QVQ (I ^ B ^ v0 = fv) => wp(S, (|s| - i < v0)) ≡ (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]) ^ i < |s| ^ v0 = fv) => ((0 <= i < |s|) ^L (fv < v0 + 1)) ≡ True
-5. QVQ (I ^ fv <= 0) => ¬B ≡ (0 <= i <= |s| ^L res = Σ(j=0;i-1)(s[j]) ^ i >= |s|) => (i >= |s|) ≡ True /* fv = |s| - i <= 0 <=> i >= |s| */ 
-
-7.
-P_c = {n >= 0 ^ res = 0 ^ i = 0}
-Q_c = asegura = {res = Σ(j=0;n-1)(if j%2=0 then j else 0 fi)}
-B = (i < n)
-S ≡
-res := res + i;
-i := i + 2;
-I = ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi))
-fv = n - i
-Por el teorema de corrección de un ciclo,
-1. QVQ P_c => I ≡ (n >= 0 ^ res = 0 ^ i = 0) => ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) ≡ True
-2. QVQ (I ^ B) => wp(S, I)
-wp(i := i + 2, I) ≡ {(0 <= i + 2 <= n + 1) ^ (i+2)%2=0 ^ res = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)} ≡
-{(0 <= i + 2 <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)} ≡ {Q}
-wp(res := res + i, Q) ≡ {(0 <= i + 2 <= n + 1) ^ i%2=0 ^ res + i = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)} ≡ wp(S, I)
-QVQ (I ^ B) => wp(S, I) ≡ ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i < n) => ((0 <= i + 2 <= n + 1) ^ i%2=0 ^ res + i = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)) ≡
-((0 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => ((0 <= i + 2 <= n + 1) ^ i%2=0 ^ res + i = Σ(j=0;i+1)(if j%2=0 then j else 0 fi)) ≡
-((0 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => ((-2 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i+1)(if j%2=0 then j else 0 fi) - i) ≡
-((0 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => ((-2 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i)(if j%2=0 then j else 0 fi) - i) ≡
-((0 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => ((-2 <= i < n) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) ≡ True
-3. QVQ (I ^ ¬B) => Q_c ≡ ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i >= n) => (res = Σ(j=0;n-1)(if j%2=0 then j else 0 fi)) ≡
-((n <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi)) => (res = Σ(j=0;n-1)(if j%2=0 then j else 0 fi)) ≡ True /* i es n o n+1, en cualquier caso la sumatoria da lo mismo */
-4. QVQ (I ^ B ^ v0 = fv) => wp(S, (n - i < v0))
-wp(i := i + 2, (n - i < v0)) ≡ {n - i - 2 < v0}
-wp(res := res + i, (n - i - 2 < v0)) ≡ {n - i - 2 < v0)}
-QVQ (I ^ B ^ v0 = fv) => wp(S, (n - i < v0)) ≡ ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i < n ^ v0 = fv) => (n - i - 2 < v0) ≡
-((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i < n ^ v0 = fv) => (fv < v0 + 2) ≡ True
-5. QVQ (I ^ fv <= 0) => ¬B ≡ ((0 <= i <= n + 1) ^ i%2=0 ^ res = Σ(j=0;i-1)(if j%2=0 then j else 0 fi) ^ i >= n) => (i >= n) ≡ True /* fv = n - i <= 0 <=> i >= n */
+7.a.
+res = 9, hace verdadera la postcondición.
+7.b.
+x = 0.25 devuelve res = 0.25, no hace verdadera la postcondición.
+x = 1 devuelve res = 1, no hace verdadera la postcondición.
+x = -0.2 devuelve res = 0.04, hace verdadera la postcondición.
+x = -7 devuelve res = 49, hace verdadera la postcondición.
+7.c.
+{x < 0 v x > 1}
 
 8.a.
-S ≡
-i := 0;
-res := 0;
-while (i <= n) do
-    if (n%i=0) then
-        res := res + i
-    else
-        skip
-    endif;
-    i := i + 1
-endwhile;
+P3 > P1 > P2
 8.b.
-No puede ser demostrado mediante el invariante propuesto:
-- Antes del ciclo el invariante requiere i >= 1 y en el programa i comienza en 0.
-- Al final del ciclo el inviariante requiere i <= n y en el programa i termina valiendo n + 1.
-Con estas consideraciones, el invariante correspondiente al ciclo propuesto es:
-I = ((0 <= i <= n+1) ^ res = Σ(j=1;i)(if n%j=0 then j else 0 fi))
+Q3 > Q1 > Q2
+8.c,d.
+No hay especificación del item anterior, la consigna está rota.
+Ver consigna 9 de guía 2 de IP.
 
 9.a.
-P_c = {(|s| = |r|) ^ (r = r0) ^ (i = 0)}
-Q_c = asegura = {(|s| = |r|) ^L (∀j: Z)((0 <= j < |s|) =>L (s[j] = r[j]))}
-B = (i < |s|)
-S ≡
-r := setAt(r, i, s[i]);
-i := i + 1;
+(x != 0) => (n <= 0 => x != 0)
+p => (q => p)
+p => ¬q v p
+Si p es verdadera, p v ¬q también lo es cualquiera sea q siempre y cuando q no se indefina, y q = {n <= 0} no puede indefinirse.
+Por esto y porque la implicación inversa no es tautológica, el requiere de p1 es más fuerte que el requiere de p2.
 9.b.
-I = ((0 <= i <= |s|) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j])))
+{res = floor(x^n)} es más fuerte que {x^n - 1 < res <= x^n}, el primero es un caso particular del segundo.
 9.c.
-fv = |s| - i
+Como el requiere de p1 es más fuerte que el de p2 y su asegura más débil, a satisface p1.
+Ver resolución de ejercicio 9 de guía 2 de IP.
+
+10.a.
+proc esPar(in x: Z, out res: Bool) {
+    requiere {True}
+    asegura {(res = True) <=> (x mod 2 = 0)}
+}
+pred esPar(x: Z) {x mod 2 = 0}
+10.b.
+proc esMultiplo(in n,m: Z, out res: Bool) {
+    requiere {True}
+    asegura {(res = True) <=> (n mod m = 0)}
+}
+pred esMultiplo(n,m: Z) {n mod m = 0}
+10.c.
+proc divisoresPositivos(in n: Z, out res: seq<Z>) {
+    requiere {n > 0}
+    asegura {sinRepetidos(res) ^ (∀m: Z)(((0 < m <= |n|) => ((m ∈ res) <=> (esMultiplo(n, m)))) ^ (¬(0 < m <= |n|) => ¬(m ∈ res)))}
+    /* pred esMultiplo(in n,m: Z) {n mod m = 0} */
+}
+10.d.
+proc factorizacion(in n: Z, out res: seq<ZxN>) {
+    requiere {n > 0}
+    asegura {
+        /* sinRepetidos(res) ^ */
+        /* sinFactoresRepetidos(res) ^ */
+        factoresOrdenados(res) ^
+        sonFactoresPrimos(res) ^
+        esFactorizacion(res, n)
+    }
+    /* pred sinFactoresRepetidos(s: seq<ZxN>) {(∀i: Z)((0 <= i < |s|) =>L ((∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[i]0 != s[j]0))))} */
+    pred factoresOrdenados(s: seq<ZxN>) {(∀i: Z)((0 <= i < |s|-1) =>L (s[i]0 < s[i+1]0))}
+    pred sonFactoresPrimos(s: seq<ZxN>) {(∀i: Z)((0 <= i < |s|) =>L (esPrimo(s[i]1)))}
+    pred sonFactorizacion(s: seq<ZxN>, n: Z) {n = π(i=0;|s|-1)(s[i]0^s[i]1)}
+}
+
+11.a.
+proc incluida(in s,t: seq<T>, out res: Bool) {
+    requiere {True}
+    asegura {res = (∀e: T)(#apariciones(t, e) >= #apariciones(s, e))}
+}
+pred incluida(s,t: seq<T>) {(∀e: T)(#apariciones(t, e) >= #apariciones(s, e))}
+11.b.
+proc interseccion(in s,t: seq<T>, out res: seq<T>) {
+    requiere {True}
+    asegura {(∀e: T)(#apariciones(res, e) = min(#apariciones(s, e), #apariciones(t, e)))}
+    aux min(in a,b: N): N = if a < b then a else b;
+}
+11.c.
+proc divisorMasComun(in s: seq<Z>, out res: Z) {
+    requiere {(|s| > 0) ^ (∃i: Z)((0 <= i < |s|) ^L (s[i] != 0))}
+    asegura {((res ∈ s) ^ (res != 0)) ^L ¬(∃i: Z)((0 <= i < |s|) ^L (s[i] != 0) ^L (cantidadDivisibles(s, s[i]) > cantidadDivisibles(s, res)))}
+    aux cantidadDivisibles(in s: seq<Z>, in m: Z): N = Σ(i=0;|s|-1)(if (s[i] mod m = 0) then 1 else 0 fi);
+}
+11.d.
+proc maximo(in s: seq<Z>, out res: Z) {
+    requiere {|s| > 0}
+    asegura {(res ∈ s) ^ ¬(∃i:Z)((0 <= i < |s|) ^L (s[i] > res))}
+}
+proc subsecuenciaContenedoraDelMaximo(in l: seq<seq<Z>>, out res: seq<Z>) {
+    requiere {(∃i:Z)((0 <= i < |l|) ^L (|l[i]| > 0)}
+    asegura {((res ∈ s) ^ (|res| > 0)) ^L ¬(∃i: Z)((0 <= i < |l|) ^L (|l[i]| > 0) ^L contieneMaximoMayor(l[i], res))}
+    pred contieneMaximoMayor(s,t: seq<Z>) {
+        (∃i: Z)((0 <= i < |s|) ^L 
+            (∀j: Z)((0 <= j < |t|) =>L (s[i] > t[j]))
+        )
+    }
+}
+11.e.
+proc partes(in l: seq<T>, out res: seq<seq<T>>) {
+    requiere {sinRepetidos(l)}
+    asegura {sinRepetidos(res) ^ (∀sub: seq<Z>)((sub ∈ res) <=> ((|sub| <= |l|) ^L (esSubseqOrdenadaSinRepetidos(sub, l))))}
+    pred esSubseqOrdenadaSinRepetidos(s,t: seq<Z>) {
+        (∀i: Z)((0 <= i < |s|-1) =>L (∃j,k: Z)((0 <= j,k < |t|) ^L ((s[i] = t[j]) ^ (s[i+1] = t[k]) ^ (j < k))))
+    }
+}
+
+12.a.
+La especificación no es correcta ya que c podría no valer el valor deseado a + b para los a, b pasados como parámetro, ya que podrían haber sido modificados.
+12.b.
+Es correcta. /* preguntar */
+12.c.
+Es correcta, aunque no parece haber un propósito en que a, b sean inout en vez de in. /* preguntar */
+En cualquier caso creo que sería más razonable que c sea de tipo out.
+
+13.a.
+Es incorrecta ya que res podría ser un valor no deseado (porque l podría haber sido modificada) y porque no especifica sobre el estado final de l.
+Por ejemplo para el input l = <1,2,3> la función podría devolver res = 5 (no es lo esperado) habiendo modificando l a <5,4,3> (no es lo esperado).
+13.b.
+Es incorrecta ya que aunque res será el valor esperado no especifica sobre el estado final de l.
+Por ejemplo para el input l = <1,2,3> la función devolvería res = 1 (es lo esperado) pero podría haber modificado l a <5,4,3> (no es lo esperado).
+13.c.
+Es incorrecta ya que aunque res será el valor esperado, subespecifica sobre el estado final de l. Además, L0 no está explicitamente definida.
+Por ejemplo para el input l = <1,2,3> la función devolvería res = 1 (es lo esperado) pero podría haber modificado l a <5,4> (no es lo esperado).
+13.d.
+Es correcta.
+
+14.a.
+Incorrecta por subespecificar, no especifica sobre qué pasa con las posiciones impares
+14.b.
+Incorrecta ya que podría indefinirse, l podría haber sido modificada de manera de ser más larga que L0 en el estado final.
+14.c.
+Incorrecta por subespecificar, l podría haber sido modificada y por lo tanto res (que asumo es tipo out y lo que devuelve la función) podría ser cualquier secuencia de enteros.
+proc duplicarPares(inout l: seq<Z>) {
+    requiere {l = L0}
+    asegura {
+        |l| = |L0| ^
+        (∀i: Z)((0 <= i < |l| ^ i mod 2 != 0) =>L l[i] = L0[i]) ^
+        (∀i: Z)((0 <= i < |l| ^ i mod 2 = 0) =>L l[i] = 2*L0[i])
+    }
+}
+
+15.a.
+proc primoAnterior(in n: N, out p: N) {
+    requiere {n > 2}
+    asegura {esPrimo(p) ^ (p < n) ^ ¬(∃m: N)((p < m < n) ^L esPrimo(m))}
+}
+proc primosHermanos(inout l: seq<Z>) {
+    requiere {l = L0 ^ (∀i: Z)((0 <= i < |l|) => (l[i] > 2))}
+    asegura {(|l| = |L0|) ^ (∀i: Z)((0 <= i < |l|) =>L esPrimoAnterior(L0[i], l[i]))}
+    pred esPrimoAnterior(n,p: N) {esPrimo(p) ^ (p < n) ^ ¬(∃m: N)((p < m < n) ^L esPrimo(m))}
+}
+15.b.
+proc reemplazar(inout l: seq<Char>, in a,b: Char) {
+    requiere {l = L0}
+    asegura {(|l| = |L0|) ^ (∀i: Z)((0 <= i < |l|) =>L (l[i] = if (L0[i] = a) then b else L0[i]))}
+}
+15.c.
+proc limpiarDuplicados(inout l: seq<Char>, out dup: seq<Char>) {
+    requiere {l = L0}
+    asegura {(|l| <= |L0|) ^L (esSubseqOrdenada(l, L0) ^ noFaltaNiSobraNinguno(l, L0) ^ sinRepetidos(l) ^ sonDuplicados(L0, dup))}
+    pred sonDuplicados(in s,d: seq<Char>) {
+        |d| < |s| ^
+        (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) > 1)) =>L (#apariciones(d, s[i]) = #apariciones(s, s[i]) - 1)) ^
+        (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) <= 1)) =>L (#apariciones(d, s[i]) = 0))
+    }
+    pred noFaltaNiSobraNinguno(s,t: seq<Char>) {(∀c: Char)((c ∈ t) <=> (c ∈ s))}
+    pred esSubseqOrdenada(s,t: seq<Char>) {
+        (∀i,j: Z)((0 <= i < j < |s|) =>L (∃k,l: Z)((0 <= k < l < |t|) ^L (
+            (s[i] = t[k]) ^ (s[j] = t[l]) ^ incluida(subseq(s, i, j+1), subseq(t, k, l+1))
+        )))
+    }
+}
