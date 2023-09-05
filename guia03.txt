@@ -98,7 +98,7 @@ wp(s[i] := 0, Q) ≡ wp(s := setAt(s,i,0), Q) ≡
 {(0 <= i < |s|) ^L (∀j: Z)((0 <= j < |setAt(s,i,0)|) =>L (setAt(s,i,0)[j] = setAt(s,i,0)[j-1]))} ≡
 {(0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = 0))}
 wp(S, Q) ≡ {def(i > 1) ^L (((i > 1) ^ ((1 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = s[i-1])))) v ((i <= 1) ^ ((0 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = 0)))))} ≡
-{((2 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = s[i-1]))) v ((0 <= i < 2) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = 0)))} /* muy largo */ /* preguntar */
+{((2 <= i < |s|) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = s[i-1]))) v ((0 <= i < 2) ^L (∀j: Z)(((0 <= j < |s|) ^ (j != i)) =>L (s[j] = 0)))}
 
 4.e.
 wp(s[i] := -s[i], Q) ≡ wp(s := setAt(s,i,-s[i]), Q) ≡
@@ -287,7 +287,7 @@ while (i <= n) do
         res := res + i
     else
         skip
-    endif;
+    endif
     i := i + 1
 endwhile;
 8.b.
@@ -305,6 +305,163 @@ S ≡
 r := setAt(r, i, s[i]);
 i := i + 1;
 9.b.
-I = ((0 <= i <= |s|) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j])))
+I = (((0 <= i <= |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j])))
+1. QVQ P_c => I ≡ ((|s| = |r|) ^ (r = r0) ^ (i = 0)) => (((0 <= i <= |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j]))) ≡ True
+2. QVQ (I ^ B) => wp(S, I)
+wp(i := i + 1, I) ≡ {((0 <= i + 1 <= |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i + 1) =>L (s[j] = r[j]))} ≡ {Q}
+wp(r := setAt(r, i, s[i]), Q) ≡ {(0 <= i < |s|) ^L (((0 <= i + 1 <= |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i + 1) =>L (s[j] = setAt(r, i, s[i])[j])))} ≡
+{((0 <= i < |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i + 1) =>L (s[j] = setAt(r, i, s[i])[j]))} ≡
+{((0 <= i < |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j <= i) =>L (s[j] = setAt(r, i, s[i])[j]))} ≡ /* cuando j = i es trivial que se cumple la condición s[j = i] = r[j = i] */
+{((0 <= i < |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j]))} ≡ wp(S, I)
+QVQ (I ^ B) => wp(S, I) ≡ (((0 <= i <= |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j])) ^ (i < |s|)) => (((0 <= i < |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j]))) ≡ True
+3. QVQ (I ^ ¬B) => Q_c ≡ (((0 <= i <= |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j])) ^ (i >= |s|)) => ((|s| = |r|) ^L (∀j: Z)((0 <= j < |s|) =>L (s[j] = r[j]))) ≡ True /* originalmente propuse un invariante idéntico pero que no pedía (|s| = |r|), y en este punto se me hizo evidente que era necesario - notar además que sin pedir esa condición, el invariante podría indefinirse, y que debería haber llegado a la necesidad de esta condición al tratar de demostrar 1. */
 9.c.
 fv = |s| - i
+4. QVQ (I ^ B ^ v0 = fv) => wp(S, (|s| - i < v0))
+wp(i := i + 1, (|s| - i < v0)) ≡ {|s| - i - 1 < v0}
+wp(r := setAt(r, i, s[i]), (|s| - i - 1 < v0)) ≡ {|s| - i - 1 < v0}
+QVQ (I ^ B ^ v0 = fv) => wp(S, (|s| - i < v0)) ≡ (((0 <= i <= |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j])) ^ (i < |s|) ^ (v0 = fv)) => (fv < v0 + 1) ≡ True
+5. QVQ (I ^ fv <= 0) => ¬B ≡ (((0 <= i <= |s|) ^ (|s| = |r|)) ^L (∀j: Z)((0 <= j < i) =>L (s[j] = r[j])) ^ (|s| - i <= 0)) => (i >= |s|) ≡ True
+
+10.a.
+I = (|s|%2=0 ^L (|s|/2-1 <= i <= |s|-1) ^L suma = Σ(j=0;|s|-2-i)(s[j]))
+10.b.
+fv = i + 1 - |s|/2
+10.c.
+1. QVQ P_c => I ≡ (|s|%2=0 ^ (i = |s| - 1) ^ (suma = 0)) => (|s|%2=0 ^L (|s|/2-1 <= i <= |s|-1) ^L suma = Σ(j=0;|s|-2-i)(s[j])) ≡ True
+2. QVQ (I ^ B) => wp(S, I)
+Con S ≡
+suma := suma + s[|s|-1-i];
+i := i - 1;
+wp(i := i - 1, I) ≡ {|s|%2=0 ^L (|s|/2-1 <= i - 1 <= |s|-1) ^L suma = Σ(j=0;|s|-1-i)(s[j])} ≡ {|s|%2=0 ^L (|s|/2 <= i <= |s|) ^L suma = Σ(j=0;|s|-1-i)(s[j])} ≡ {Q}
+wp(suma := suma + s[|s|-1-i], Q) ≡ {(0 <= |s|-1-i < |s|) ^L |s|%2=0 ^L (|s|/2 <= i <= |s|) ^L suma + s[|s|-1-i] = Σ(j=0;|s|-1-i)(s[j])} ≡
+{(-|s|+1 <= -i < 1) ^L |s|%2=0 ^L (|s|/2 <= i <= |s|) ^L suma = Σ(j=0;|s|-1-i)(s[j]) - s[|s|-1-i]} ≡
+{(-1 < i <= |s|-1) ^L |s|%2=0 ^L (|s|/2 <= i <= |s|) ^L suma = Σ(j=0;|s|-2-i)(s[j])} ≡
+{(0 <= i <= |s|-1) ^L |s|%2=0 ^L (|s|/2 <= i <= |s|) ^L suma = Σ(j=0;|s|-2-i)(s[j])} ≡ wp(S, I)
+QVQ (I ^ B) => wp(S, I) ≡ (|s|%2=0 ^L (|s|/2-1 <= i <= |s|-1) ^L suma = Σ(j=0;|s|-2-i)(s[j]) ^ (i >= |s|/2)) => ((0 <= i <= |s|-1) ^L |s|%2=0 ^L (|s|/2 <= i <= |s|) ^L suma = Σ(j=0;|s|-2-i)(s[j])) ≡ True
+3. QVQ (I ^ ¬B) => Q_c ≡ (|s|%2=0 ^L (|s|/2-1 <= i <= |s|-1) ^L suma = Σ(j=0;|s|-2-i)(s[j]) ^ (i < |s|/2)) => (|s|%2=0 ^ (i = |s|/2-1) ^L suma = Σ(j=0;|s|/2-1)(s[j])) ≡ True /* i = |s|/2-1, |s|-2-(|s|/2-1) = |s|/2-1 */ /* obs.: siendo estricto, el primer ^ de Q_c debería ser ^L ya que en caso contrario la división entera podría indefinirse */
+4. QVQ (I ^ B ^ v0 = fv) => wp(S, (i + 1 - |s|/2 < v0))
+wp(i := i - 1, (i + 1 - |s|/2 < v0)) ≡ {i - |s|/2 < v0}
+wp(suma := suma + s[|s|-1-i], (i - |s|/2 < v0)) ≡ {(0 <= |s|-1-i < |s|) ^L (i - |s|/2 < v0)}
+QVQ (I ^ B ^ v0 = fv) => wp(S, (i + 1 - |s|/2 < v0)) ≡ (|s|%2=0 ^L (|s|/2-1 <= i <= |s|-1) ^L suma = Σ(j=0;|s|-2-i)(s[j]) ^ (i >= |s|/2) ^ (v0 = fv)) => ((0 <= |s|-1-i < |s|) ^L (i - |s|/2 < v0)) ≡
+(|s|%2=0 ^L (|s|/2-1 <= i <= |s|-1) ^L suma = Σ(j=0;|s|-2-i)(s[j]) ^ (i >= |s|/2) ^ (v0 = fv)) => ((0 <= i <= |s|-1) ^L (fv < v0 + 1)) ≡ True
+5. QVQ (I ^ fv <= 0) => ¬B ≡ (|s|%2=0 ^L (|s|/2-1 <= i <= |s|-1) ^L suma = Σ(j=0;|s|-2-i)(s[j]) ^ (i <= |s|/2 - 1)) => (i < |s|/2) ≡ True /* i = |s|/2-1 */
+
+11.
+P = {True} /* obs.: wp(S, Q) necesariamente debe ser True para la correctitud del programa */
+Q = {((r = -1) => (∀k: Z)((0 <= k < |s|) =>L (s[k] != e))) ^ ((r != -1) => ((0 <= r < |s|) ^L (s[r] = e)))}
+P_c = {(i = |s| - 1) ^ (j = -1)}
+Q_c = wp(r := j, Q) ≡ {((j = -1) => (∀k: Z)((0 <= k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((0 <= j < |s|) ^L (s[j] = e)))}
+B_c = (i >= 0)
+I = ((-1 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e)))))
+fv = i + 1
+Ya tengo lo suficiente como para probar la correctitud del ciclo:
+1. QVQ P_c => I ≡ ((i = |s| - 1) ^ (j = -1)) => ((-1 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e))))) ≡ True
+2. QVQ (I ^ B_c) => wp(S_c, I)
+wp(i := i - 1, I) ≡ {(-1 <= i-1 < |s|) ^L (((j = -1) => (∀k: Z)((i-1 < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i-1 < j < |s|) ^L (s[j] = e))))} ≡ {Q1}
+wp(if s[i]=e then j:=i else skip endif, Q1) ≡ {(0 <= i < |s|) ^L (((s[i] = e) ^ wp(j := i, Q1)) v ((s[i] != e) ^ wp(skip, Q1)))} ≡
+{(0 <= i < |s|) ^L (((s[i] = e) ^ wp(j := i, Q1)) v ((s[i] != e) ^ Q1))}
+wp(j := i, Q1) ≡ {(-1 <= i-1 < |s|) ^L (((i = -1) => (∀k: Z)((i-1 < k < |s|) =>L (s[k] != e))) ^ ((i != -1) => ((i-1 < i < |s|) ^L (s[i] = e))))} ≡
+{(0 <= i < |s|+1) ^L (((i = -1) => (∀k: Z)((i-1 < k < |s|) =>L (s[k] != e))) ^ ((i != -1) => ((i-1 < i < |s|) ^L (s[i] = e))))} ≡
+{(0 <= i < |s|+1) ^L ((i-1 < i < |s|) ^L (s[i] = e))} ≡ {(0 <= i < |s|+1) ^L (i < |s|) ^L (s[i] = e)} ≡ {(0 <= i < |s|) ^L (s[i] = e)}
+wp(S_c, I) ≡ wp(if s[i]=e then j:=i else skip endif, Q1) ≡ {(0 <= i < |s|) ^L (((s[i] = e) ^ wp(j := i, Q1)) v ((s[i] != e) ^ Q1))} ≡
+{(0 <= i < |s|) ^L (((s[i] = e) ^ ((0 <= i < |s|) ^L (s[i] = e))) v ((s[i] != e) ^ Q1))} ≡ {(0 <= i < |s|) ^L ((s[i] = e) v ((s[i] != e) ^ Q1))} ≡
+{(0 <= i < |s|) ^L ((s[i] = e) v ((s[i] != e) ^ (-1 <= i-1 < |s|) ^L (((j = -1) => (∀k: Z)((i-1 < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i-1 < j < |s|) ^L (s[j] = e))))))} ≡
+{(0 <= i < |s|) ^L ((s[i] = e) v ((s[i] != e) ^ (((j = -1) => (∀k: Z)((i <= k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e))))))}
+QVQ (I ^ B_c) => wp(S_c, I) ≡ ((-1 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e)))) ^ (i >= 0)) => ((0 <= i < |s|) ^L ((s[i] = e) v ((s[i] != e) ^ (((j = -1) => (∀k: Z)((i <= k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e))))))) ≡
+((0 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e))))) => ((0 <= i < |s|) ^L ((s[i] = e) v ((s[i] != e) ^ (((j = -1) => (∀k: Z)((i <= k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e))))))) ≡ True /* q => p v (¬p ^ q) es tautológico */
+3. QVQ (I ^ ¬B_c) => Q_c ≡ (((-1 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e))))) ^ (i < 0)) => (((j = -1) => (∀k: Z)((0 <= k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((0 <= j < |s|) ^L (s[j] = e)))) ≡ True /* i = -1 */
+4. QVQ (I ^ B_c ^ v0 = fv) => wp(S_c, (i + 1 < v0))
+wp(i := i - 1, (i + 1 < v0)) ≡ {i + 1 < v0 + 1} ≡ {Q2}
+wp(if s[i]=e then j:=i else skip endif, Q2) ≡ {(0 <= i < |s|) ^L (((s[i] = e) ^ wp(j := i, Q2)) v ((s[i] != e) ^ Q2))}
+wp(j := i, Q2) ≡ {Q2}
+wp(S_c, (i + 1 < v0)) ≡ wp(if s[i]=e then j:=i else skip endif, Q2) ≡ {(0 <= i < |s|) ^L Q2} ≡ {(0 <= i < |s|) ^L (i + 1 < v0 + 1)}
+QVQ (I ^ B_c ^ v0 = fv) => wp(S_c, (i + 1 < v0)) ≡ ((-1 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e)))) ^ (i >= 0) ^ (v0 = fv)) => ((0 <= i < |s|) ^L (fv < v0 + 1)) ≡ True
+5. QVQ (I ^ fv <= 0) => ¬B_c ≡ (((-1 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e))))) ^ (i <= -1)) => (i < 0) ≡ True /* i = -1 */
+El ciclo termina y es correcto.
+Basta ver que P = {True} => wp(i := |s| - 1, wp(j := -1, P_c))
+wp(i := |s| - 1, wp(j := -1, P_c)) ≡ wp(i := |s| - 1, wp(j := -1, ((i = |s| - 1) ^ (j = -1)))) ≡ wp(i := |s| - 1, ((i = |s| - 1) ^ (-1 = -1))) ≡
+wp(i := |s| - 1, (i = |s| - 1)) ≡ {|s| - 1 = |s| - 1} ≡ {True}
+P => wp(i := |s| - 1, wp(j := -1, P_c)) ≡ True => True ≡ True
+
+12.
+P = {True} /* obs.: wp(S, Q) necesariamente debe ser True para la correctitud del programa */
+Q = {res = True <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))}
+P_c = {(i = 0) ^ (j = -1)}
+B_c = (i < |s|)
+I = ((0 <= i <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i) ^L (s[k] = e))))
+fv = |s| - i
+Q_c = wp(if j!=-1 then res:=true else res:=false endif, Q) ≡ {((j != -1) ^ wp(res := True, Q)) v ((j = -1) ^ wp(res := False, Q))}
+wp(res := True, Q) ≡ {True = True <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))} ≡ {(∃k: Z)((0 <= k < |s|) ^L (s[k] = e))}
+wp(res := False, Q) ≡ {False = True <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))} ≡ {¬(∃k: Z)((0 <= k < |s|) ^L (s[k] = e))}
+Q_c = {((j != -1) ^ (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))) v ((j = -1) ^ ¬(∃k: Z)((0 <= k < |s|) ^L (s[k] = e)))} ≡
+{(j != -1) <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))}
+Ya tengo lo suficiente como para probar la correctitud del ciclo:
+1. QVQ P_c => I ≡ ((i = 0) ^ (j = -1)) => ((0 <= i <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i) ^L (s[k] = e)))) ≡ True
+2. QVQ (I ^ B_c) => wp(S_c, I)
+wp(i := i + 1, I) ≡ {(0 <= i+1 <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i+1) ^L (s[k] = e)))} ≡ {Q1}
+wp(if s[i]=e then j:=i else skip endif, Q1) ≡ {(0 <= i < |s|) ^L (((s[i] = e) ^ wp(j := i, Q1)) v ((s[i] != e) ^ wp(skip, Q1)))}
+wp(j := i, Q1) ≡ {(0 <= i+1 <= |s|) ^L ((i != -1) <=> (∃k: Z)((0 <= k < i+1) ^L (s[k] = e)))}
+wp(S_c, I) ≡ wp(if s[i]=e then j:=i else skip endif, Q1) ≡ {(0 <= i < |s|) ^L (((s[i] = e) ^ wp(j := i, Q1)) v ((s[i] != e) ^ Q1))} ≡
+{(0 <= i < |s|) ^L (((s[i] = e) ^ ((0 <= i+1 <= |s|) ^L ((i != -1) <=> (∃k: Z)((0 <= k < i+1) ^L (s[k] = e))))) v ((s[i] != e) ^ ((0 <= i+1 <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i+1) ^L (s[k] = e))))))} ≡
+{(0 <= i < |s|) ^L (((s[i] = e) ^ (∃k: Z)((0 <= k < i+1) ^L (s[k] = e))) v ((s[i] != e) ^ ((j != -1) <=> (∃k: Z)((0 <= k < i+1) ^L (s[k] = e)))))} ≡
+{(0 <= i < |s|) ^L (True v ((s[i] != e) ^ ((j != -1) <=> (∃k: Z)((0 <= k < i+1) ^L (s[k] = e)))))} ≡ {0 <= i < |s|}
+QVQ (I ^ B_c) => wp(S_c, I) ≡ ((0 <= i <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i) ^L (s[k] = e))) ^ (i < |s|)) => (0 <= i < |s|) ≡ True
+3. QVQ (I ^ ¬B) => Q_c ≡ ((0 <= i <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i) ^L (s[k] = e))) ^ (i >= |s|)) => ((j != -1) <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))) ≡ True /* i = |s| */
+4. QVQ (I ^ B_c ^ v0 = fv) => wp(S_c, (|s| - i < v0))
+wp(i := i + 1, (|s| - i < v0)) ≡ {|s| - i < v0 + 1} ≡ {Q2}
+wp(if s[i]=e then j:=i else skip endif, Q2) ≡ {(0 <= i < |s|) ^L (((s[i] = e) ^ wp(j := i, Q2)) v ((s[i] != e) ^ Q2))}
+wp(j := i, Q2) ≡ {Q2}
+wp(S_c, (|s| - i < v0)) ≡ wp(if s[i]=e then j:=i else skip endif, Q2) ≡ {(0 <= i < |s|) ^L Q2} ≡ {(0 <= i < |s|) ^L (|s| - i < v0 + 1)}
+QVQ (I ^ B_c ^ v0 = fv) => wp(S_c, (|s| - i < v0)) ≡ ((0 <= i <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i) ^L (s[k] = e))) ^ (i < |s|) ^ (v0 = fv)) => ((0 <= i < |s|) ^L (fv < v0 + 1)) ≡ True
+5. QVQ (I ^ fv <= 0) => ¬B_c ≡ ((0 <= i <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i) ^L (s[k] = e))) ^ (|s| - i <= 0)) => (i >= |s|) ≡ True /* i = |s| */
+El ciclo termina y es correcto.
+Basta ver que P = {True} => wp(i := 0, wp(j := -1, P_c))
+wp(i := 0, wp(j := -1, P_c)) ≡ wp(i := 0, ((i = 0) ^ (-1 = -1))) ≡ {(0 = 0) ^ True} ≡ {True}
+P => wp(i := 0, wp(j := -1, P_c)) ≡ True => True ≡ True
+
+13.
+P = {(|r| = |a| + |b|) ^ (r = r0)}
+Q = {(|r| = |r0|) ^L ((∀j: Z)((0 <= j < |a|) =>L (r[j] = a[j])) ^ (∀j: Z)((0 <= j < |b|) =>L (r[j + |a|] = b[j])))} /* obs.: siendo estricto, el primer ^ debería ser ^L */
+P_c1 = {(|r| = |a| + |b|) ^ (r = r0) ^ (i = 0)}
+P_c2 = {Q_c1 ^ (i = 0)}
+Para poder demostrar la correctitud del segundo ciclo necesito P_c2, por lo tanto necesito Q_c1, pero no lo tengo.
+Entonces, propongo que Q_c1 es la primera parte del asegura, Q:
+Q_c1 = {(|r| = |r0|) ^L (∀j: Z)((0 <= j < |a|) =>L (r[j] = a[j]))} /* me genera dudas si es necesario incluir |r| = |r0|, sospecho que lo és */
+Q_c2 = {Q}
+B_c1 = (i < |a|)
+B_c2 = (i < |b|)
+fv_c1 = |a| - i
+fv_c2 = |b| - i
+I_c1 = (((0 <= i <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j])))
+I_c2 = ((Q_c1 ^ (0 <= i <= |b|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j + |a|] = b[j])))
+Ya tengo lo suficiente como para probar la correctitud del segundo ciclo:
+c2.1. QVQ P_c2 => I_c2 ≡ (Q_c1 ^ (i = 0)) => ((Q_c1 ^ (0 <= i <= |b|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j + |a|] = b[j]))) ≡ True
+c2.2. QVQ (I_c2 ^ B_c2) => wp(S_c2, I_c2)
+wp(S_c2, I_c2) ≡ wp(r := setAt(r, |a|+i, b[i]), wp(i := i + 1, I_c2))
+wp(i := i + 1, I_c2) ≡ {(Q_c1 ^ (0 <= i+1 <= |b|)) ^L (∀j: Z)((0 <= j < i+1) =>L (r[j + |a|] = b[j]))}
+wp(S_c2, I_c2) ≡ {((0 <= |a|+i < |r|) ^ (0 <= i < |b|)) ^L ((Q_c1 ^ (0 <= i+1 <= |b|)) ^L (∀j: Z)((0 <= j < i+1) =>L (setAt(r, |a|+i, b[i])[j + |a|] = b[j])))} ≡ /* Q_c1 no se ve afectado por el cambio sobre r */
+{((0 <= |a|+i < |r|) ^ (0 <= i < |b|)) ^L (Q_c1 ^L (∀j: Z)((0 <= j <= i) =>L (setAt(r, |a|+i, b[i])[j + |a|] = b[j])))} ≡ /* si j = i, es trivial que se cumple la condición del para todo */
+{((0 <= |a|+i < |r|) ^ (0 <= i < |b|)) ^L (Q_c1 ^L (∀j: Z)((0 <= j < i) =>L (r[j + |a|] = b[j])))}
+QVQ (I_c2 ^ B_c2) => wp(S_c2, I_c2) ≡ ((Q_c1 ^ (0 <= i <= |b|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j + |a|] = b[j])) ^ (i < |b|)) => (((0 <= |a|+i < |r|) ^ (0 <= i < |b|)) ^L (Q_c1 ^L (∀j: Z)((0 <= j < i) =>L (r[j + |a|] = b[j])))) ≡ True /* (0 <= |a|+i < |r|) es True porque por Q_c1 |r| = |r0| = |a| + |b| sumado a que (i < |b|) */
+c2.3. QVQ (I_c2 ^ ¬B_c2) => Q_c2 ≡ ((Q_c1 ^ (0 <= i <= |b|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j + |a|] = b[j])) ^ (i >= |b|)) => (Q_c1 ^L (∀j: Z)((0 <= j < |b|) =>L (r[j + |a|] = b[j]))) ≡ True /* i = |b| */
+c2.4. QVQ (I_c2 ^ B_c2 ^ v0 = fv_c2) => wp(S_c2, (|b| - i < v0))
+wp(S_c2, (|b| - i < v0)) ≡ wp(r := setAt(r, |a|+i, b[i]), wp(i := i + 1, (|b| - i < v0))) ≡ wp(r := setAt(r, |a|+i, b[i]), (|b| - i < v0 + 1)) ≡ {fv_c2 < v0 + 1}
+QVQ (I_c2 ^ B_c2 ^ v0 = fv_c2) => wp(S_c2, (|b| - i < v0)) ≡ ((Q_c1 ^ (0 <= i <= |b|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j + |a|] = b[j])) ^ (i < |b|) ^ (v0 = fv_c2)) => (fv_c2 < v0 + 1) ≡ True
+c2.5. QVQ (I_c2 ^ fv_c2 <= 0) => ¬B_c2 ≡ ((Q_c1 ^ (0 <= i <= |b|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j + |a|] = b[j])) ^ (|b| <= i)) => (i >= |b|) ≡ True /* i = |b| */
+Para probar la correctitud del primer ciclo, primero tengo que ver que es cierto que Q_c1 => wp(i := 0, P_c2) ≡ Q_c1 => (Q_c1 ^ (0 = 0)) ≡ True
+Ya tengo lo suficiente como para probar la correctitud del primer ciclo:
+c1.1. QVQ P_c1 => I_c1 ≡ ((|r| = |a| + |b|) ^ (r = r0) ^ (i = 0)) => (((0 <= i <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j]))) ≡ True
+c1.2. QVQ (I_c1 ^ B_c1) => wp(S_c1, I_c1)
+wp(S_c1, I_c1) ≡ wp(r := setAt(r, i, a[i]), wp(i := i + 1, I_c1))
+wp(i := i + 1, I_c1)) ≡ {((0 <= i+1 <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i+1) =>L (r[j] = a[j]))}
+wp(S_c1, I_c1) ≡ {((0 <= i < |r|) ^ (0 <= i < |a|)) ^L (((0 <= i+1 <= |a|) ^ (|setAt(r, i, a[i])| = |r0|)) ^L (∀j: Z)((0 <= j < i+1) =>L (setAt(r, i, a[i])[j] = a[j])))} ≡
+{((0 <= i < |r|) ^ (0 <= i < |a|)) ^L (((-1 <= i < |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i+1) =>L (setAt(r, i, a[i])[j] = a[j])))} ≡
+{((0 <= i < |r|) ^ (0 <= i < |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j]))}
+QVQ (I_c1 ^ B_c1) => wp(S_c1, I_c1) ≡ (((0 <= i <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j])) ^ (i < |a|)) => (((0 <= i < |r|) ^ (0 <= i < |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j]))) ≡ True
+c1.3. QVQ (I_c1 ^ ¬B_c1) => Q_c1 ≡ (((0 <= i <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j])) ^ (i >= |a|)) => ((|r| = |r0|) ^L (∀j: Z)((0 <= j < |a|) =>L (r[j] = a[j]))) ≡ True /* i = |a| */
+c1.4. QVQ (I_c1 ^ B_c1 ^ v0 = fv_c1) => wp(S_c1, (|a| - i < v0))
+wp(S_c1, (|a| - i < v0)) ≡ wp(r := setAt(r, i, a[i]), wp(i := i + 1, (|a| - i < v0))) ≡ wp(r := setAt(r, i, a[i]), (|a| - i < v0 + 1)) ≡ {fv_c1 < v0 + 1}
+QVQ (I_c1 ^ B_c1 ^ v0 = fv_c1) => wp(S_c1, (|a| - i < v0)) ≡ (((0 <= i <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j])) ^ (i < |a|) ^ (v0 = fv_c1)) => (fv_c1 < v0 + 1) ≡ True
+c1.5. QVQ (I_c1 ^ fv_c1 <= 0) => ¬B_c1 ≡ (((0 <= i <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j])) ^ (|a| <= i)) => (i >= |a|) ≡ True /* i = |a| */
+Solo queda ver que P => wp(i := 0, P_c1) ≡ P => ((|r| = |a| + |b|) ^ (r = r0) ^ (0 = 0)) ≡ P => P ≡ True
