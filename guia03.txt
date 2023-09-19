@@ -351,10 +351,12 @@ QVQ (I ^ B ^ v0 = fv) => wp(S, (i + 1 - |s|/2 < v0)) ≡ (|s|%2=0 ^L (|s|/2-1 <=
 P = {True} /* obs.: wp(S, Q) necesariamente debe ser True para la correctitud del programa */
 Q = {((r = -1) => (∀k: Z)((0 <= k < |s|) =>L (s[k] != e))) ^ ((r != -1) => ((0 <= r < |s|) ^L (s[r] = e)))}
 P_c = {(i = |s| - 1) ^ (j = -1)}
-Q_c = wp(r := j, Q) ≡ {((j = -1) => (∀k: Z)((0 <= k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((0 <= j < |s|) ^L (s[j] = e)))}
+Q_c = {((j = -1) => (∀k: Z)((0 <= k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((0 <= j < |s|) ^L (s[j] = e)))}
 B_c = (i >= 0)
 I = ((-1 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e)))))
 fv = i + 1
+wp(r := j, Q) ≡ {((j = -1) => (∀k: Z)((0 <= k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((0 <= j < |s|) ^L (s[j] = e)))}
+Como esta wp es igual a Q_c, Q_c la implica. Por lo tanto, el programa posterior al ciclo es correcto.
 Ya tengo lo suficiente como para probar la correctitud del ciclo:
 1. QVQ P_c => I ≡ ((i = |s| - 1) ^ (j = -1)) => ((-1 <= i < |s|) ^L (((j = -1) => (∀k: Z)((i < k < |s|) =>L (s[k] != e))) ^ ((j != -1) => ((i < j < |s|) ^L (s[j] = e))))) ≡ True
 2. QVQ (I ^ B_c) => wp(S_c, I)
@@ -383,6 +385,7 @@ Basta ver que P = {True} => wp(i := |s| - 1, wp(j := -1, P_c))
 wp(i := |s| - 1, wp(j := -1, P_c)) ≡ wp(i := |s| - 1, wp(j := -1, ((i = |s| - 1) ^ (j = -1)))) ≡ wp(i := |s| - 1, ((i = |s| - 1) ^ (-1 = -1))) ≡
 wp(i := |s| - 1, (i = |s| - 1)) ≡ {|s| - 1 = |s| - 1} ≡ {True}
 P => wp(i := |s| - 1, wp(j := -1, P_c)) ≡ True => True ≡ True
+Por el corolario de monotonía todo el programa es correcto.
 
 12.
 P = {True} /* obs.: wp(S, Q) necesariamente debe ser True para la correctitud del programa */
@@ -391,11 +394,13 @@ P_c = {(i = 0) ^ (j = -1)}
 B_c = (i < |s|)
 I = ((0 <= i <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i) ^L (s[k] = e))))
 fv = |s| - i
-Q_c = wp(if j!=-1 then res:=true else res:=false endif, Q) ≡ {((j != -1) ^ wp(res := True, Q)) v ((j = -1) ^ wp(res := False, Q))}
+Q_c = {(j != -1) <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))}
+wp(if j!=-1 then res:=true else res:=false endif, Q) ≡ {((j != -1) ^ wp(res := True, Q)) v ((j = -1) ^ wp(res := False, Q))}
 wp(res := True, Q) ≡ {True = True <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))} ≡ {(∃k: Z)((0 <= k < |s|) ^L (s[k] = e))}
 wp(res := False, Q) ≡ {False = True <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))} ≡ {¬(∃k: Z)((0 <= k < |s|) ^L (s[k] = e))}
-Q_c = {((j != -1) ^ (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))) v ((j = -1) ^ ¬(∃k: Z)((0 <= k < |s|) ^L (s[k] = e)))} ≡
+wp(if j!=-1 then res:=true else res:=false endif, Q) = {((j != -1) ^ (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))) v ((j = -1) ^ ¬(∃k: Z)((0 <= k < |s|) ^L (s[k] = e)))} ≡
 {(j != -1) <=> (∃k: Z)((0 <= k < |s|) ^L (s[k] = e))}
+Como esta wp es igual a Q_c, Q_c la implica. Por lo tanto, el programa posterior al ciclo es correcto.
 Ya tengo lo suficiente como para probar la correctitud del ciclo:
 1. QVQ P_c => I ≡ ((i = 0) ^ (j = -1)) => ((0 <= i <= |s|) ^L ((j != -1) <=> (∃k: Z)((0 <= k < i) ^L (s[k] = e)))) ≡ True
 2. QVQ (I ^ B_c) => wp(S_c, I)
@@ -419,6 +424,7 @@ El ciclo termina y es correcto.
 Basta ver que P = {True} => wp(i := 0, wp(j := -1, P_c))
 wp(i := 0, wp(j := -1, P_c)) ≡ wp(i := 0, ((i = 0) ^ (-1 = -1))) ≡ {(0 = 0) ^ True} ≡ {True}
 P => wp(i := 0, wp(j := -1, P_c)) ≡ True => True ≡ True
+Por el corolario de monotonía todo el programa es correcto.
 
 13.
 P = {(|r| = |a| + |b|) ^ (r = r0)}
@@ -465,3 +471,4 @@ wp(S_c1, (|a| - i < v0)) ≡ wp(r := setAt(r, i, a[i]), wp(i := i + 1, (|a| - i 
 QVQ (I_c1 ^ B_c1 ^ v0 = fv_c1) => wp(S_c1, (|a| - i < v0)) ≡ (((0 <= i <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j])) ^ (i < |a|) ^ (v0 = fv_c1)) => (fv_c1 < v0 + 1) ≡ True
 c1.5. QVQ (I_c1 ^ fv_c1 <= 0) => ¬B_c1 ≡ (((0 <= i <= |a|) ^ (|r| = |r0|)) ^L (∀j: Z)((0 <= j < i) =>L (r[j] = a[j])) ^ (|a| <= i)) => (i >= |a|) ≡ True /* i = |a| */
 Solo queda ver que P => wp(i := 0, P_c1) ≡ P => ((|r| = |a| + |b|) ^ (r = r0) ^ (0 = 0)) ≡ P => P ≡ True
+Por el corolario de monotonía todo el programa es correcto.
