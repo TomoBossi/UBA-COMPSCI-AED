@@ -1,0 +1,243 @@
+/* Solo para referencia, dejo el TAD Conjunto con observador elems visto en clase*/
+TAD Conjunto<T> {
+    obs elems: conj<T>
+
+    proc conjVacio(out c: Conjunto<T>) {
+        requiere {True}
+        asegura {c.elems == {}}
+    }
+
+    proc agregar(inout c: Conjunto<T>, in e: T) {
+        requiere {c == old(c)}
+        asegura {c.elems == old(c).elems + {e}}
+    }
+
+    proc quitar(inout c: Conjunto<T>, in e: T) {
+        requiere {c == old(c)}
+        asegura {c.elems == old(c).elems - {e}}
+    }
+}
+
+1.a.
+TAD Rectangulo2D {
+    obs cs: tupla<struct<x: R, y: R>, struct<x: R, y: R>, struct<x: R, y: R>, struct<x: R, y: R>>
+
+    proc crear(in c1x, c1y, c2x, c2y, c3x, c3y, c4x, c4y: float, out r: Rectangulo2D) {
+        requiere {True}
+        asegura {r.cs == <<x: c1x, y: c1y>, <x: c2x, y: c2y>, <x: c3x, y: c3y>, <x: c4x, y: c4y>>}  
+    }
+
+    proc trasladar(inout r: Rectangulo2D, in dx: float, in dy: float) {
+        requiere {r == old(r)}
+        asegura {forall c: struct<x:R, y:R> :: c in r.cs ==>L (r.c.x == old(r).c.x + dx && r.c.y == old(r).c.y + dy)}
+    }
+
+    proc escalar(inout r: Rectangulo2D, in k: float) {
+        requiere {r == old(r) && k > 0}
+        asegura {forall c: struct<x:R, y:R> :: c in r.cs ==>L (r.c.x == k*old(r).c.x && r.c.y == k*old(r).c.y)}
+    }
+
+    proc rotar(inout r: Rectangulo2D, in a: float) {
+        requiere {r == old(r)}
+        asegura {
+            forall c: struct<x:R, y:R> :: c in r.cs ==>L 
+            (r.c.x == cos(a)*old(r).c.x - sin(a)*old(r).c.y && r.c.y == sin(a)*old(r).c.x + cos(a)*old(r).c.y)
+        }
+    }
+
+    proc invertir(inout r: Rectangulo2D) {
+        requiere {r == old(r)}
+        asegura {forall c: struct<x:R, y:R> :: c in r.cs ==>L (r.c.x == -old(r).c.x && r.c.y == -old(r).c.y)}
+    }
+}
+
+1.b.
+TAD Esfera3D {
+    obs pos: struct<x: R, y: R, z: R>
+    obs r: R
+
+    proc crear(in x', y', z', r': float, out e: Esfera3D) {
+        requiere {True}
+        asegura {e.pos == <x: x', y: y', z: z'> && e.r == r'}
+    } 
+
+    proc trasladar(inout e: Esfera3D, in dx: float, in dy: float, in dz: float) {
+        requiere {e == old(e)}
+        asegura {e.pos.x == old(e).pos.x + dx && e.pos.y == old(e).pos.y + dy && e.pos.z == old(e).pos.z + dz}
+        asegura {e.r == old(e).r}
+    }
+
+    proc rotar(inout e: Esfera3D, a1: float, a2: float) {
+        /* a1 rota sobre el plano XY (alrededor del eje Z), a1 sobre el plano YZ (alrededor del eje X)*/
+        requiere {e == old(e)}
+        asegura {
+            e.pos.x == cos(a1)*old(e).pos.x - sin(a1)*old(e).pos.y && 
+            e.pos.y == cos(a2)*rotacion_XY_y(old(e).pos.x, old(e).pos.x, a1) - sin(a2)*old(e).pos.z
+            e.pos.z == sin(a2)*rotacion_XY_y(old(e).pos.x, old(e).pos.x, a1) + cos(a2)*old(e).pos.z
+        }
+        asegura {e.r == old(e).r}
+    }
+
+    proc escalar(inout e: Esfera3D, k: float) {
+        requiere {e == old(e) && k > 0}
+        asegura {e.r == k*old(e).r}
+        asegura {e.pos == old(e).pos}    
+    }
+
+    proc invertir(inout e: Esfera3D) {
+        requiere {e == old(e)}
+        asegura {e.pos.x == -old(e).pos.x && e.pos.y == -old(e).pos.y && e.pos.z == -old(e).pos.z}
+        asegura {e.r == old(e).r}
+    }
+
+    aux rotacion_XY_y(in x: float, in y: float, a: float) = sin(a)*x + cos(a)*y
+}
+
+2.a.
+/* El enunciado no aclara qué procedimientos especificar, así que voy a basarme en el TAD Conjunto visto en clase */
+TAD Multiconjunto<T> {
+    obs cantidad(e: T): int
+    
+    proc crear(out mc: Multiconjunto<T>) {
+        requiere {True}
+        asegura {forall e: T :: mc.cantidad(e) = 0}
+    }
+
+    proc agregar(inout mc: Multiconjunto<T>, in e: T) {
+        requiere {mc == old(mc)}
+        asegura {mc.cantidad(e) == old(mc).cantidad(e) + 1}
+        asegura {forall e': T :: e' != e ==> mc.cantidad(e') = old(mc).cantidad(e')}
+    }
+
+    proc remover_uno(inout mc: Multiconjunto<T>, in e: T) {
+        requiere {mc == old(mc)}
+        asegura {if old(mc).cantidad(e) > 0 then mc.cantidad(e) == old(mc).cantidad(e) - 1 else mc.cantidad(e) == old(mc).cantidad(e) fi}
+        asegura {forall e': T :: e' != e ==> mc.cantidad(e') == old(mc).cantidad(e')}
+    }
+
+    proc remover_todos(inout mc: Multiconjunto<T>, in e: T) {
+        requiere {mc == old(mc)}
+        asegura {mc.cantidad(e) = 0}
+        asegura {forall e': T :: e' != e ==> mc.cantidad(e') == old(mc).cantidad(e')}
+    }
+
+    proc pertenece(in mc: Multiconjunto<T>, in e: T, out res: bool) {
+        requiere {True}
+        asegura {if mc.cantidad(e) > 0 then res == True else res == False fi}
+    }
+
+    proc cantidad_elementos_totales(in mc: Multiconjunto<T>, out res: int) {
+        sum e: T :: True :: mc.cantidad(e)
+    }
+}
+
+2.b.
+/* Para decidir qué operaciones implementar me basé en https://github.com/sponja23/resumen-final-aed2, no vimos TAD Dict en clase... */
+/* Sí tenemos disponible el tipo dict<K, V>, que trivializa la especificación del TAD Dict */
+/* Primero voy a especificar el TAD Dict común sin usar el tipo dict, como para al menos poder decirme a mí mismo que lo hice */
+TAD Dict<K, V> {
+    obs pares: seq<struct<k: K, v: V>>
+    
+    proc crear(out d: Dict<K, V>) {
+        requiere {True}
+        asegura {d.pares = []}
+    }
+
+    proc valor(in d: Dict<K, V>, in key: K, out res: V) {
+        requiere {pertenece(d.pares, k)}
+        asegura {exists i: int :: 0 <= i < |d.pares| &&L (key == d.pares[i].k && res == d.pares[i].v)}
+    }
+
+    proc agregar(inout d: Dict<K, V>, in key: K, in value: V) {
+        requiere {d == old(d) && !pertenece(old(d).pares, key)}
+        asegura {d.pares == old(d).pares + [<k: key, v: value>]} /* + := concatenación */
+    }
+
+    proc quitar(inout d: Dict<K, V>, in key: K) {
+        requiere {d == old(d) && pertenece(old(d).pares, key)}
+        asegura {
+            exists i: int :: 0 <= i < |old(d).pares| &&L 
+            (key == old(d).pares[i].k && d.pares == old(d).pares[0..i] + old(d).pares[i+1..|old(d).pares|]) /* s[i..j] := subseq de s de i a j, j no inclusive */
+        }
+    }
+
+    pred pertenece(d: Dict<K, V>, key: K) {
+        exists v: V :: <k: key, v: v> in d.pares
+    }
+}
+
+/* Duda: ¿setKey y delKey se indefinen si !(k in d)? Resolví asumiendo que no, y que setKey crea una clave nueva si no existe */
+TAD Multidict<K, V> {
+    obs pares: dict<K, Conjunto<V>> /* Hace referencia al TAD Conjunto con observador elems visto en clase */
+
+    proc crear(out md: Multidict<K, V>) {
+        requiere {True}
+        asegura {md.pares == {}}
+    }
+
+    proc valor(in md: Multidict<K, V>, in k: K, out res: Conjunto<V>) {
+        requiere {k in md.pares}
+        asegura {res == md.pares[k]}
+    }
+
+    proc crear_resetear_par(inout md: Multidict<K, V>, in k: K, in v: V) {
+        requiere {md == old(md)}
+        asegura {md.pares == setKey(old(md).pares, k, {v})} /* Duda: ¿Esta linea es incorrecta? {v} no es un Conjunto, pretende ser el obs elems de uno. */
+        
+        /* requiere {md == old(md) && !(k in old(md).pares)} */
+        /* asegura {md.pares[k].elems = {v}} */ /* Duda: ¿Esta linea es incorrecta? La clave k aún no existe*/
+        /* asegura {forall k': K :: k' in old(md.pares) ==>L (k' in md.pares &&L md.pares[k'] == old(md).pares[k'])} */
+        /* asegura {forall k': K :: (!(k' in old(md.pares)) && k' != k) ==>L !(k' in md.pares)} */
+    }
+
+    proc remover_par(inout md: Multidict<K, V>, in k: K) {
+        requiere {md == old(md)}
+        asegura {md.pares = delKey(old(md).pares, k)}
+    }
+
+    proc agregar_valor(inout md: Multidict<K, V>, in k: K, in v: V) {
+        requiere {md == old(md)}
+        asegura {md.pares == setKey(old(md).pares, k, old(md).pares[k].elems + {v})}
+
+        /* requiere {md == old(md) && (k in old(md).pares)} */
+        /* asegura {md.pares[k].elems = old(md).pares[k].elems + {v}} */
+        /* asegura {forall k': K :: (k' in old(md.pares) && k' != k) ==>L (k' in md.pares &&L md.pares[k'] == old(md).pares[k'])} */
+        /* asegura {forall k': K :: !(k' in old(md.pares)) ==>L !(k' in md.pares)} */
+    }
+
+    proc remover_valor(inout md: Multidict<K, V>, in k: K, in v: V) {
+        requiere {md == old(md)}
+        asegura {md.pares == setKey(old(md).pares, k, old(md).pares[k].elems - {v})}
+        
+        /* requiere {md == old(md) && (k in old(md).pares)} */
+        /* asegura {md.pares[k].elems = old(md).pares[k].elems - {v}} */
+        /* asegura {forall k': K :: (k' in old(md.pares) && k' != k) ==>L (k' in md.pares &&L md.pares[k'] == old(md).pares[k'])} */
+        /* asegura {forall k': K :: !(k' in old(md.pares)) ==>L !(k' in md.pares)} */
+    }
+}
+
+3.a.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
