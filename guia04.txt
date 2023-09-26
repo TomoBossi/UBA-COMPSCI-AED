@@ -29,25 +29,25 @@ TAD Rectangulo2D {
 
     proc trasladar(inout r: Rectangulo2D, in dx: float, in dy: float) {
         requiere {r == old(r)}
-        asegura {forall c: struct<x:R, y:R> :: c in r.cs ==>L (r.c.x == old(r).c.x + dx && r.c.y == old(r).c.y + dy)}
+        asegura {forall i: int :: (0 <= i < 4) ==>L (r.cs[i].x == old(r).cs[i].x + dx && r.cs[i].y == old(r).cs[i].y + dy)}
     }
 
     proc escalar(inout r: Rectangulo2D, in k: float) {
         requiere {r == old(r) && k > 0}
-        asegura {forall c: struct<x:R, y:R> :: c in r.cs ==>L (r.c.x == k*old(r).c.x && r.c.y == k*old(r).c.y)}
+        asegura {forall i: int :: (0 <= i < 4) ==>L (r.cs[i].x == k*old(r).cs[i].x && r.cs[i].y == k*old(r).cs[i].y)}
     }
 
     proc rotar(inout r: Rectangulo2D, in a: float) {
         requiere {r == old(r)}
         asegura {
-            forall c: struct<x:R, y:R> :: c in r.cs ==>L 
-            (r.c.x == cos(a)*old(r).c.x - sin(a)*old(r).c.y && r.c.y == sin(a)*old(r).c.x + cos(a)*old(r).c.y)
+            forall i: int :: (0 <= i < 4) ==>L 
+            (r.cs[i].x == cos(a)*old(r).cs[i].x - sin(a)*old(r).cs[i].y && r.cs[i].y == sin(a)*old(r).cs[i].x + cos(a)*old(r).cs[i].y)
         }
     }
 
     proc invertir(inout r: Rectangulo2D) {
         requiere {r == old(r)}
-        asegura {forall c: struct<x:R, y:R> :: c in r.cs ==>L (r.c.x == -old(r).c.x && r.c.y == -old(r).c.y)}
+        asegura {forall i: int :: (0 <= i < 4) ==>L (r.cs[i].x == -old(r).cs[i].x && r.cs[i].y == -old(r).cs[i].y)}
     }
 }
 
@@ -217,27 +217,3 @@ TAD Multidict<K, V> {
 }
 
 3.a.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
