@@ -1,4 +1,6 @@
-/* Solo para referencia, dejo el TAD Conjunto con observador elems visto en clase*/
+/* apunte oficial TADs 2c 2023: https://campus.exactas.uba.ar/pluginfile.php/509550/mod_resource/content/1/tads.pdf */
+
+/* sólo para referencia, dejo el TAD Conjunto con observador elems visto en clase*/
 TAD Conjunto<T> {
     obs elems: conj<T>
 
@@ -41,7 +43,7 @@ TAD Rectangulo2D {
         requiere {r == old(r)}
         asegura {
             forall i: int :: (0 <= i < 4) ==>L 
-            (r.cs[i].x == cos(a)*old(r).cs[i].x - sin(a)*old(r).cs[i].y && r.cs[i].y == sin(a)*old(r).cs[i].x + cos(a)*old(r).cs[i].y)
+                (r.cs[i].x == cos(a)*old(r).cs[i].x - sin(a)*old(r).cs[i].y && r.cs[i].y == sin(a)*old(r).cs[i].x + cos(a)*old(r).cs[i].y)
         }
     }
 
@@ -56,9 +58,9 @@ TAD Esfera3D {
     obs pos: struct<x: R, y: R, z: R>
     obs r: R
 
-    proc crear(in x', y', z', r': float, out e: Esfera3D) {
+    proc crear(in pos_x, pos_y, pos_z, radius: float, out e: Esfera3D) {
         requiere {True}
-        asegura {e.pos == <x: x', y: y', z: z'> && e.r == r'}
+        asegura {e.pos == <x: pos_x, y: pos_y, z: pos_z> && e.r == radius}
     } 
 
     proc trasladar(inout e: Esfera3D, in dx: float, in dy: float, in dz: float) {
@@ -90,11 +92,11 @@ TAD Esfera3D {
         asegura {e.r == old(e).r}
     }
 
-    aux rotacion_XY_y(in x: float, in y: float, a: float) = sin(a)*x + cos(a)*y
+    aux rotacion_XY_y(in x, y, a: float) = sin(a)*x + cos(a)*y
 }
 
 2.a.
-/* El enunciado no aclara qué procedimientos especificar, así que voy a basarme en el TAD Conjunto visto en clase */
+/* el enunciado no aclara qué procedimientos especificar, así que voy a basarme en el TAD Conjunto visto en clase */
 TAD Multiconjunto<T> {
     obs cantidad(e: T): int
     
@@ -106,19 +108,19 @@ TAD Multiconjunto<T> {
     proc agregar(inout mc: Multiconjunto<T>, in e: T) {
         requiere {mc == old(mc)}
         asegura {mc.cantidad(e) == old(mc).cantidad(e) + 1}
-        asegura {forall e': T :: e' != e ==> mc.cantidad(e') = old(mc).cantidad(e')}
+        asegura {forall elem: T :: elem != e ==> mc.cantidad(elem) = old(mc).cantidad(elem)}
     }
 
     proc remover_uno(inout mc: Multiconjunto<T>, in e: T) {
         requiere {mc == old(mc)}
-        asegura {if old(mc).cantidad(e) > 0 then mc.cantidad(e) == old(mc).cantidad(e) - 1 else mc.cantidad(e) == old(mc).cantidad(e) fi}
-        asegura {forall e': T :: e' != e ==> mc.cantidad(e') == old(mc).cantidad(e')}
+        asegura {if old(mc).cantidad(e) > 0 then mc.cantidad(e) == old(mc).cantidad(e) - 1 else mc.cantidad(e) == 0 fi}
+        asegura {forall elem: T :: elem != e ==> mc.cantidad(elem) == old(mc).cantidad(elem)}
     }
 
     proc remover_todos(inout mc: Multiconjunto<T>, in e: T) {
         requiere {mc == old(mc)}
         asegura {mc.cantidad(e) = 0}
-        asegura {forall e': T :: e' != e ==> mc.cantidad(e') == old(mc).cantidad(e')}
+        asegura {forall elem: T :: elem != e ==> mc.cantidad(elem) == old(mc).cantidad(elem)}
     }
 
     proc pertenece(in mc: Multiconjunto<T>, in e: T, out res: bool) {
@@ -132,9 +134,9 @@ TAD Multiconjunto<T> {
 }
 
 2.b.
-/* Para decidir qué operaciones implementar me basé en https://github.com/sponja23/resumen-final-aed2, no vimos TAD Dict en clase... */
-/* Sí tenemos disponible el tipo dict<K, V>, que trivializa la especificación del TAD Dict */
-/* Primero voy a especificar el TAD Dict común sin usar el tipo dict, como para al menos poder decirme a mí mismo que lo hice */
+/* para decidir qué operaciones implementar me basé en https://github.com/sponja23/resumen-final-aed2, no vimos TAD Dict en clase... */
+/* sí tenemos disponible el tipo dict<K, V>, que trivializa la especificación del TAD Dict */
+/* primero voy a especificar el TAD Dict común sin usar el tipo dict, como para al menos poder decirme a mí mismo que lo hice */
 TAD Dict<K, V> {
     obs pares: seq<struct<k: K, v: V>>
     
@@ -149,15 +151,15 @@ TAD Dict<K, V> {
     }
 
     proc agregar(inout d: Dict<K, V>, in key: K, in value: V) {
-        requiere {d == old(d) && !pertenece(old(d).pares, key)}
+        requiere {d == old(d) && !pertenece(d.pares, key)}
         asegura {d.pares == old(d).pares + [<k: key, v: value>]} /* + := concatenación */
     }
 
     proc quitar(inout d: Dict<K, V>, in key: K) {
-        requiere {d == old(d) && pertenece(old(d).pares, key)}
+        requiere {d == old(d) && pertenece(d.pares, key)}
         asegura {
             exists i: int :: 0 <= i < |old(d).pares| &&L 
-            (key == old(d).pares[i].k && d.pares == old(d).pares[0..i] + old(d).pares[i+1..|old(d).pares|]) /* s[i..j] := subseq de s de i a j, j no inclusive */
+                (key == old(d).pares[i].k && d.pares == old(d).pares[0..i] + old(d).pares[i+1..|old(d).pares|]) /* s[i..j] := subseq de s de i a j, j no inclusive */
         }
     }
 
@@ -166,9 +168,9 @@ TAD Dict<K, V> {
     }
 }
 
-/* Duda: ¿setKey y delKey se indefinen si !(k in d)? Resolví asumiendo que no, y que setKey crea una clave nueva si no existe */
+/* duda: ¿setKey y delKey se indefinen si !(k in d)? Resolví asumiendo que no, y que setKey crea una clave nueva si no existe */
 TAD Multidict<K, V> {
-    obs pares: dict<K, Conjunto<V>> /* Hace referencia al TAD Conjunto con observador elems visto en clase */
+    obs pares: dict<K, Conjunto<V>> /* duda: hace referencia al TAD Conjunto con observador elems visto en clase, lo uso en vez de a conj<V> solo para poder usar Conjunto<V> como tipo de retorno en valor. No sé si esto es correcto */
 
     proc crear(out md: Multidict<K, V>) {
         requiere {True}
@@ -182,38 +184,320 @@ TAD Multidict<K, V> {
 
     proc crear_resetear_par(inout md: Multidict<K, V>, in k: K, in v: V) {
         requiere {md == old(md)}
-        asegura {md.pares == setKey(old(md).pares, k, {v})} /* Duda: ¿Esta linea es incorrecta? {v} no es un Conjunto, pretende ser el obs elems de uno. */
+        asegura {md.pares == setKey(old(md).pares, k, {v})} /* duda: ¿Esta linea es incorrecta? {v} no es un Conjunto, pretende ser el obs elems de uno. */
         
-        /* requiere {md == old(md) && !(k in old(md).pares)} */
-        /* asegura {md.pares[k].elems = {v}} */ /* Duda: ¿Esta linea es incorrecta? La clave k aún no existe*/
-        /* asegura {forall k': K :: k' in old(md.pares) ==>L (k' in md.pares &&L md.pares[k'] == old(md).pares[k'])} */
-        /* asegura {forall k': K :: (!(k' in old(md.pares)) && k' != k) ==>L !(k' in md.pares)} */
+        /* requiere {md == old(md) && !(k in md.pares)} */
+        /* asegura {md.pares[k].elems == {v}} */ /* duda: ¿Esta linea es incorrecta? La clave k aún no existe */
+        /* asegura {forall key: K :: key in old(md.pares) ==>L (key in md.pares &&L md.pares[key] == old(md).pares[key])} */
+        /* asegura {forall key: K :: (!(key in old(md.pares)) && key != k) ==>L !(key in md.pares)} */
     }
 
     proc remover_par(inout md: Multidict<K, V>, in k: K) {
         requiere {md == old(md)}
-        asegura {md.pares = delKey(old(md).pares, k)}
+        asegura {md.pares == delKey(old(md).pares, k)}
     }
 
     proc agregar_valor(inout md: Multidict<K, V>, in k: K, in v: V) {
         requiere {md == old(md)}
         asegura {md.pares == setKey(old(md).pares, k, old(md).pares[k].elems + {v})}
 
-        /* requiere {md == old(md) && (k in old(md).pares)} */
-        /* asegura {md.pares[k].elems = old(md).pares[k].elems + {v}} */
-        /* asegura {forall k': K :: (k' in old(md.pares) && k' != k) ==>L (k' in md.pares &&L md.pares[k'] == old(md).pares[k'])} */
-        /* asegura {forall k': K :: !(k' in old(md.pares)) ==>L !(k' in md.pares)} */
+        /* requiere {md == old(md) && (k in md.pares)} */
+        /* asegura {md.pares[k].elems == old(md).pares[k].elems + {v}} */
+        /* asegura {forall key: K :: (key in old(md.pares) && key != k) ==>L (key in md.pares &&L md.pares[key] == old(md).pares[key])} */
+        /* asegura {forall key: K :: !(key in old(md.pares)) ==>L !(key in md.pares)} */
     }
 
     proc remover_valor(inout md: Multidict<K, V>, in k: K, in v: V) {
-        requiere {md == old(md)}
+        requiere {md == old(md) && k in md.pares}
         asegura {md.pares == setKey(old(md).pares, k, old(md).pares[k].elems - {v})}
         
-        /* requiere {md == old(md) && (k in old(md).pares)} */
-        /* asegura {md.pares[k].elems = old(md).pares[k].elems - {v}} */
-        /* asegura {forall k': K :: (k' in old(md.pares) && k' != k) ==>L (k' in md.pares &&L md.pares[k'] == old(md).pares[k'])} */
-        /* asegura {forall k': K :: !(k' in old(md.pares)) ==>L !(k' in md.pares)} */
+        /* requiere {md == old(md) && (k in md.pares)} */
+        /* asegura {md.pares[k].elems == old(md).pares[k].elems - {v}} */
+        /* asegura {forall key: K :: (key in old(md.pares) && key != k) ==>L (key in md.pares &&L md.pares[key] == old(md).pares[key])} */
+        /* asegura {forall key: K :: !(key in old(md.pares)) ==>L !(key in md.pares)} */
     }
 }
 
 3.a.
+TAD CacheTTL<T> {
+    obs datos: Conjunto<struct<dato: T, hora: float>>
+    obs tiempo_de_vida: float
+
+    proc crear(out c: CacheTTL<T>) {
+        requiere {True}
+        asegura {c.datos == {}}
+    }
+
+    proc agregar(inout c: CacheTTL<T>, in d: T) {
+        requiere {c == old(c)}
+        asegura {c.datos.elems == old(c).datos.elems + {<dato: d, hora: now()>}}
+        asegura {c.tiempo_de_vida == old(c).tiempo_de_vida}
+    }
+
+    proc remover(inout c: CacheTTL<T>) { /* asumo que se ejecuta periodicamente y automáticamente */
+        requiere {c == old(c)}
+        asegura {
+            forall d: T, h: float :: (!(<dato: d, hora: h> in old(c).datos.elems) || (h < now() - c.tiempo_de_vida)) ==>L
+                !(<dato: d, hora: h> in c.datos.elems)
+        }
+        asegura {
+            forall d: T, h: float :: ((<dato: d, hora: h> in old(c).datos.elems) && (h >= now() - c.tiempo_de_vida)) ==>L
+                (<dato: d, hora: h> in c.datos.elems)
+        }
+        asegura {c.tiempo_de_vida == old(c).tiempo_de_vida}
+    }
+
+    proc acceder(in c: CacheTTL<T>, out res: Conjunto<struct<dato: T, hora: float>>) {
+        requiere {True}
+        asegura {res == c.datos}
+    }
+}
+
+3.b.
+TAD Cola<T> {
+    obs elems: seq<T>
+
+    proc crear(out c: Cola<T>) {
+        requiere {True}
+        asegura {c.elems == []}
+    }
+
+    proc vacia(in c: Cola<T>, out res: bool) {
+        requiere {True}
+        asegura {if c.elems == [] then res == True else res == False fi}
+    }
+
+    proc encolar(inout c: Cola<T>, in e: T) {
+        requiere {c == old(c)}
+        asegura {c.elems == old(c).elems + [e]}
+    }
+
+    proc desencolar(inout c: Cola<T>, out res: T) {
+        requiere {c == old(c) && |c.elems| > 0}
+        asegura {c.elems == old(c).elems[1..|old(c).elems|] && res = old(c).elems[0]}
+    }
+}
+
+TAD ColaFinita<T> {
+    obs max: int
+    obs cola: Cola<T>
+
+    proc crear(in m: int, out c: ColaFinita<T>) {
+        requiere {True}
+        asegura {c.cola.elems == [] && c.max == m}
+    }
+
+    proc vacia(in c: ColaFinita<T>, out res: bool) {
+        requiere {True}
+        asegura {if c.cola.elems == [] then res == True else res == False fi}
+    }
+
+    proc encolar(inout c: ColaFinita<T>, in e: T) {
+        requiere {c == old(c)}
+        asegura {
+            if |old(c).cola.elems| < c.max then 
+                c.cola.elems == old(c).cola.elems + [e]
+            else 
+                c.cola.elems == old(c).cola.elems[1..|old(c).cola.elems|] + [e]
+            fi
+        }
+        asegura {c.max == old(c).max}
+    }
+
+    proc desencolar(inout c: ColaFinita<T>, out res: T) {
+        requiere {c == old(c) && |c.cola.elems| > 0}
+        asegura {c.cola.elems == old(c).cola.elems[1..|old(c).cola.elems|] && res = old(c).cola.elems[0]}
+        asegura {c.max == old(c).max}
+
+    proc remover(inout c: ColaFinita<T>, in i: int, out res: T) {
+        requiere {c == old(c) && 0 <= i < |c.cola.elems|}
+        asegura {res == c.cola.elems[i]}
+        asegura {c.cola.elems == old(c).cola.elems[0..i] + old(c).cola.elems[i+1..|old(c).cola.elems|]}
+        asegura {c.max == old(c).max}
+    }
+}
+
+TAD CacheFIFO<T> {
+    obs cf: ColaFinita<T> /* creo que hubiese sido más simple y elegante no tratar de "modularizar" y simplemente usar un observador datos: seq<T> y otro max: int... aunque vuelve la duda de, en ese caso, qué podría haber devuelto en acceder en ese caso */
+
+    proc crear(in m: int, out c: CacheFIFO<T>) {
+        requiere {True}
+        asegura {c.cf.cola.elems == [] && c.cf.max == m}
+    }
+
+    proc agregar(inout c: CacheFIFO<T>, in d: T) {
+        requiere {c == old(c)}
+        asegura {
+            if |old(c).cf.cola.elems| < c.cf.max then 
+                c.cf.cola.elems == old(c).cf.cola.elems + [e]
+            else 
+                c.cf.cola.elems == old(c).cf.cola.elems[1..|old(c).cf.cola.elems|] + [e]
+            fi
+        }
+        asegura {c.cf.max == old(c).cf.max}
+    }
+
+    proc remover(inout c: CacheFIFO<T>) {
+        requiere {c == old(c) && |c.cf.cola.elems| > 0}
+        asegura {c.cf.cola.elems == old(c).cf.cola.elems[1..|old(c).cf.cola.elems|]}
+        asegura {c.cf.max == old(c).cf.max}
+    }
+
+    proc acceder(in c: CacheFIFO<T>, out res: ColaFinita<T>) {
+        requiere {True}
+        asegura {res == c.cf}
+    }
+}
+
+3.c.
+TAD CacheLRU<T> {
+    obs datos: seq<struct<dato: T, hora: float>>
+    obs max: int
+
+    proc crear(in m: int, out c: CacheLRU<T>) {
+        requiere {True}
+        asegura {c.datos == [] && c.max == m}
+    }
+
+    proc tamaño(in c: CacheLRU<T>, out res: int) {
+        requiere {True}
+        asegura {res == |c.datos|}
+    }
+
+    proc acceder(inout c: CacheLRU<T>, in i: int, out res: T) {
+        requiere {c == old(c) && 0 <= i < |c.datos|}
+        asegura {res == old(c).datos[i].dato}
+        asegura {c.datos == old(c).datos[0..i] + old(c).datos[i+1..|old(c).datos|] + [<dato: res, hora: now()>]}
+        asegura {c.max == old(c).max}
+    }
+
+    proc agregar(inout c: CacheLRU<T>, in d: T) {
+        requiere {c == old(c)}
+        asegura {
+            if |old(c).datos| < c.max then 
+                c.datos == old(c).datos + [<dato: e, hora: now()>]
+            else 
+                c.datos == old(c).datos[1..|old(c).datos|] + [<dato: e, hora: now()>]
+            fi
+        }
+        asegura {c.max == old(c).max}
+    }
+
+    proc remover(inout c: CacheLRU<T>, in d: T) {
+        requiere {c == old(c) && |c.datos| > 0}
+        asegura {c.datos == old(c).datos[1..|old(c).datos|]}
+        asegura {c.max == old(c).max}
+    }
+}
+
+4.a.
+TAD Pila<T> {
+    obs elems: dict<int, T> /* indice, elem */
+    obs info: dict<seq<char>, int> /* cantidad de elementos, expresada de esta manera para no observar con otra cosa que no sea un dict */
+
+    proc crear(out p: Pila<T>) {
+        requiere {True}
+        asegura {p.elems = {}}
+        asegura {p.info = {"cantidad": 0}}
+    }
+
+    proc vacia(in p: Pila<T>, out res: bool) {
+        requiere {True}
+        asegura {if p.info["cantidad"] == 0 then res == True else res == False}
+    }
+
+    proc apilar(inout c: Pila<T>, in e: T) {
+        requiere {p == old(p)}
+        asegura {p.elems == setKey(old(p).elems, old(p).info["cantidad"], e)}
+        asegura {p.elems.info == setKey(old(p).info, "cantidad", old(p).info["cantidad"] + 1)}
+    }
+
+    proc desapilar(inout p: Pila<T>, out res: T) {
+        requiere {p == old(p) && p.info["cantidad"] > 0}
+        asegura {res == p.elems[p.info["cantidad"]]}
+        asegura {p.elems == delKey(old(p).elems, p.info["cantidad"])}
+        asegura {p.elems.info == setKey(old(p).info, "cantidad", old(p).info["cantidad"] - 1)}
+    }
+}
+
+4.b.
+TAD Diccionario<K, V> {
+    obs pares: conj<tupla<K, V>>
+}
+
+4.c.
+TAD Punto {
+    obs rho: float
+    obs theta: float
+}
+
+5.
+/* asumo ejes cartesianos convencionales (x incrementa hacia la derecha, y incrementa hacia arriba) */
+TAD Robot {
+    obs pos: Coord
+    obs historial: seq<Coord>
+    info: Coord es struct<x: int, y: int>
+
+    proc crear(out r: Robot) {
+        requiere {True}
+        asegura {r.pos = <x: 0, y: 0> && res.historial == [<x: 0, y: 0>]}
+    }
+
+    proc arriba(inout r: Robot) {
+        requiere {r == old(r)}
+        asegura {r.pos == <x: old(r).pos.x, y: old(r).pos.y + 1>}
+        asegura {r.historial == old(r).historial + [r.pos]}
+    }
+
+    proc abajo(inout r: Robot) {
+        requiere {r == old(r)}
+        asegura {r.pos == <x: old(r).pos.x, y: old(r).pos.y - 1>}
+        asegura {r.historial == old(r).historial + [r.pos]}
+    }
+
+    proc derecha(inout r: Robot) {
+        requiere {r == old(r)}
+        asegura {r.pos == <x: old(r).pos.x + 1, y: old(r).pos.y>}
+        asegura {r.historial == old(r).historial + [r.pos]}
+    }
+
+    proc izquierda(inout r: Robot) {
+        requiere {r == old(r)}
+        asegura {r.pos == <x: old(r).pos.x - 1, y: old(r).pos.y>}
+        asegura {r.historial == old(r).historial + [r.pos]}
+    }
+
+    proc posicion(in r: Robot, out res: Coord) {
+        requiere {True}
+        asegura {res == r.pos}
+    }
+
+    proc mas_derecha(in r: Robot, out i: int) /* duda: el enunciado es contradictorio en cuanto al tipo de salida, int vs Coord, y por las mismas dudas de antes sospecho que no tendría sentido devolver tipo Coord pues Coord es un mero alias para un tipo de especificación */
+        requiere {True}
+        asegura {forall j: int :: 0 <= j < |r.historial| ==>L r.historial[i].x >= r.historial[j].x} /* i es el índice de alguna coordenada de x máximo en el historial */
+
+    proc cuantas_veces_paso(in r: Robot, in c: Coord, out res: int) {
+        requiere {True}
+        asegura {res == #apariciones(r.historial, c)}
+    }
+
+    aux #apariciones(in s: seq<T>, in e: T) = sum i: int :: 0 <= i < |s| :: if s[i] == e then 1 else 0 fi /* no figura en la tabla de operaciones para seq<T> subida al campus */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
