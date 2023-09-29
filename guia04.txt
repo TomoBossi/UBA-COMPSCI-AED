@@ -94,9 +94,9 @@ TAD Esfera3D {
     obs pos: struct<x: R, y: R, z: R>
     obs r: R
 
-    proc crear(in pos_x, pos_y, pos_z, radius: float, out e: Esfera3D) {
+    proc crear(in x_, y_, z_, r_: float, out e: Esfera3D) {
         requiere {True}
-        asegura {e.pos == <x: pos_x, y: pos_y, z: pos_z> && e.r == radius}
+        asegura {e.pos == <x: x_, y: y_, z: z_> && e.r == r_}
     } 
 
     proc trasladar(inout e: Esfera3D, in dx: float, in dy: float, in dz: float) {
@@ -209,9 +209,9 @@ TAD CacheTTL<T> {
     obs datos: conj<struct<dato: T, hora: float>>
     obs tiempo_de_vida: float
 
-    proc crear(in ttl: float, out c: CacheTTL<T>) {
+    proc crear(in tiempo_de_vida_: float, out c: CacheTTL<T>) {
         requiere {True}
-        asegura {c.datos == {} && c.tiempo_de_vida == ttl}
+        asegura {c.datos == {} && c.tiempo_de_vida == tiempo_de_vida_}
     }
 
     proc agregar(inout c: CacheTTL<T>, in d: T) {
@@ -268,9 +268,9 @@ TAD CacheFIFO<T> { /* ColaFinita<T> */
     obs max: int
     obs elems: seq<T>
 
-    proc crear(in m: int, out c: CacheFIFO<T>) {
+    proc crear(in max_: int, out c: CacheFIFO<T>) {
         requiere {True}
-        asegura {c.elems == [] && c.max == m}
+        asegura {c.elems == [] && c.max == max_}
     }
 
     proc vacia(in c: CacheFIFO<T>, out res: bool) {
@@ -314,9 +314,9 @@ TAD CacheLRU<T> {
     obs datos: seq<struct<dato: T, hora: float>>
     obs max: int
 
-    proc crear(in m: int, out c: CacheLRU<T>) {
+    proc crear(in max_: int, out c: CacheLRU<T>) {
         requiere {True}
-        asegura {c.datos == [] && c.max == m}
+        asegura {c.datos == [] && c.max == max_}
     }
 
     proc tamaño(in c: CacheLRU<T>, out res: int) {
@@ -414,9 +414,9 @@ TAD Punto {
     obs rho: float
     obs theta: float
 
-    proc crear(in norma, a: float, out p: Punto) {
+    proc crear(in rho_, theta_: float, out p: Punto) {
         requiere {True}
-        asegura {p.rho == norma && p.a == theta}
+        asegura {p.rho == rho_ && p.theta == theta_}
     }
 
     proc coordX(in p: Punto, out res: float) {
@@ -562,12 +562,12 @@ TAD Stock<T> {
     obs productos: dict<Producto, int> /* {producto: cantidad en stock} */
     obs historial_compra: dict<Producto, seq<int>>
     obs historial_venta: dict<Producto, seq<int>>
-    obs sustitutos: dict<Producto, Producto> /* producto sustituido: producto sustituto */
+    obs sustitutos: dict<Producto, Producto> /* producto sustituido: producto sustituto, interpreté que cada producto puede tener como máximo un sustituto */
     info: Producto es T
 
-    proc crear(in stock_minimo: int, out s: Stock) {
+    proc crear(in min_: int, out s: Stock) {
         requiere {True}
-        asegura {s.min == stock_minimo && s.productos == {} && s.sustitutos == {} && s.historial_compra == {} && s.historial_venta == {}}
+        asegura {s.min == min_ && s.productos == {} && s.sustitutos == {} && s.historial_compra == {} && s.historial_venta == {}}
     }
 
     proc registrar_nuevo_producto(inout s: Stock, in p: Producto) {
@@ -580,26 +580,264 @@ TAD Stock<T> {
 
     proc comprar_producto(inout s: Stock, in p: Producto, in q: int) {
         requiere {s == old(s) && p in s.productos}
-        asegura {}
+        asegura {s.productos == setKey(old(s).productos, p, old(s).productos[p] + q)}
+        asegura {s.historial_compra == setKey(old(s).historial_compra, p, old(s).historial_compra[p] + [q])}
+        asegura {s.historial_venta == old(s).historial_venta}
+        asegura {s.sustitutos == old(s).sustitutos}
     }
 
     proc vender_producto(inout s: Stock, in p: Producto, in q: int) {
         requiere {s == old(s) && p in s.productos &&L q <= s.productos[p]}
-        asegura {}
+        asegura {s.productos == setKey(old(s).productos, p, old(s).productos[p] - q)}
+        asegura {s.historial_venta == setKey(old(s).historial_venta, p, old(s).historial_venta[p] + [q])}
+        asegura {s.historial_compra == old(s).historial_compra}
+        asegura {s.sustitutos == old(s).sustitutos}
     }
 
     proc informar_sustituto(inout s: Stock, in p, psus: Producto) {
         requiere {s == old(s) && p in s.productos && psus in s.productos}
-        asegura {}
+        asegura {s.sustitutos == setKey(old(s).sustitutos, p, psus)}
+        asegura {s.productos == old(s).productos}
+        asegura {s.historial_compra == old(s).historial_compra}
+        asegura {s.historial_venta == old(s).historial_venta}
     }
 
     proc productos_escasos(in s: Stock, out res: conj<Producto>) {
         requiere {True}
-        asegura {res == {} + sum p: Producto :: p in s.productos &&L escaso(s, p) :: {p}}
+        asegura {forall p: Producto :: p in s.productos &&L escaso(s, p) <==> p in res}
     }
 
     pred escaso(s: Stock, p: Producto) {
         s.sustitutos[p] == {} && s.productos[p] < s.min ||L
         p in s.sustitutos &&L (s.productos[s.sustitutos[p]] + s.productos[p]) < s.min
+    }
+}
+
+8.
+TAD Tablero {
+    obs partida: Baldosa
+    obs llegada: Baldosa
+    obs saltos: dict<Baldosa, Baldosa> /* baldosa de origen: baldosa a la que se salta (si la celda no es "especial", el valor es igual a la clave) */
+    info: Baldosa es int
+
+    proc crear(in llegada_: Baldosa, in saltos_: dict<Baldosa, Baldosa>, out t: Tablero) {
+        requiere {llegada_ > 0 && forall b: Baldosa :: b in saltos_ ==>L 0 <= b, saltos_[b] <= llegada_}
+        asegura {t.partida == 0 && t.llegada == llegada_ && t.saltos == saltos_}
+    }
+}
+
+/* asumo que las baldosas visitadas son sólo en las que un jugador estuvo al final de cada uno de sus turnos */
+TAD Oca {
+    obs tablero: Tablero
+    obs posiciones: tupla<Baldosa, Baldosa> /* posición actual del juegador 0 y el jugador 1 */
+    obs turno: int /* incrementa después de cada turno, cuando turno es par juega un jugador y cuando es impar juega el otro */
+    obs historial_posiciones: tupla<seq<Baldosa>, seq<Baldosa>>
+    obs historial_dados: tupla<seq<int>, seq<int>>
+    info: Baldosa es int
+
+    proc crear(in llegada_: Baldosa, in saltos_: dict<Baldosa, Baldosa>, out o: Oca) {
+        requiere {llegada_ > 0 && forall b: Baldosa :: b in saltos_ ==>L 0 <= b, saltos_[b] <= llegada_}
+        asegura {o.tablero.partida == 0 && o.tablero.llegada == llegada_ && o.tablero.saltos == saltos_}
+        asegura {o.posiciones == <0, 0> && o.turno == 0 && o.historial_posiciones == <[], []> && o.historial_dados == <[], []>}
+    }
+
+    proc jugar_un_turno(inout o: Oca, in dado: int) {
+        requiere {o == old(o) && !hay_ganador(o)}
+        asegura {
+            if old(o).turno%2 == 0 then
+                o.posiciones == <o.tablero.saltos[old(o).posiciones[0] + dado], old(o).posiciones[1]>
+                o.historial_posiciones == <old(o).historial_posiciones[0] + [posiciones[0]], old(o).historial_posiciones[1]>
+                o.historial_dados == <old(o).historial_dados[0] + [dado], old(o).historial_dados[1]>
+            else
+                o.posiciones == <old(o).posiciones[0], o.tablero.saltos[old(o).posiciones[1] + dado]>
+                o.historial_posiciones == <old(o).historial_posiciones[0], old(o).historial_posiciones[1] + [posiciones[1]]>
+                o.historial_dados == <old(o).historial_dados[0], old(o).historial_dados[1] + [dado]>
+            fi
+        }
+        asegura {o.tablero == old(o).tablero}
+        asegura {o.turno == old(o).turno + 1}
+    }
+
+    proc tiradas(in o: Oca, out res: tupla<seq<int>, seq<int>>) {
+        requiere {True}
+        asegura {res == o.historial_dados}
+    }
+
+    proc baldosa_visitada(in o: Oca, in j: int, in baldosa: Baldosa, out res: bool) {
+        requiere {j == 0 || j == 1}
+        asegura {res == baldosa in o.historial_posiciones[j]}
+    }
+
+    pred hay_ganador(o: Oca) {
+        o.posiciones[0] >= o.tablero.llegada || o.posiciones[1] >= o.tablero.llegada
+    }
+}
+
+9.
+TAD Persona {
+    obs dni: int
+    obs tipo: seq<char> /* "bien" o "prole" */
+
+    proc crear(in dni_: int, in tipo_: seq<char>, out p: Persona) {
+        requiere {tipo_ == "bien" || tipo_ == "prole"}
+        asegura {p.dni == dni_ && p.tipo == tipo_}
+    }
+}
+
+TAD BancoClasista {
+    obs cola_bien: seq<Persona>
+    obs cola_prole: seq<Persona>
+    obs caja_A_libre: bool
+    obs caja_B_libre: bool
+
+    proc crear(out b: BancoClasista) {
+        requiere {True}
+        asegura {b.cola_bien == [] && b.cola_prole == [] && b.caja_A_libre == True && b.caja_B_libre == True}
+    }
+
+    proc encolar(inout b: BancoClasista, in p: Persona) {
+        requiere {b == old(b) && !(exists p_cola: Persona :: (p_cola in b.cola_bien || p_cola in b.cola_prole) &&L p_cola.dni == p.dni)}
+        asegura {
+            if p.tipo == "bien" then
+                b.cola_bien == old(b).cola_bien + [p] &&
+                b.cola_prole == old(b).cola_prole
+            else
+                b.cola_prole == old(b).cola_prole + [p] &&
+                b.cola_bien == old(b).cola_bien
+            fi
+        }
+        asegura {b.caja_A_libre == old(b).caja_A_libre && b.caja_B_libre == old(b).caja_B_libre}
+    }
+
+    proc abandonar_cola(inout b: BancoClasista, in p: Persona) {
+        requiere {b == old(b) && (p in b.cola_bien || p in b.cola_prole)}
+        asegura {
+            if p in old(b).cola_bien then
+                b.cola_bien == old(b).cola_bien[0..indice(old(b).cola_bien, p)] + old(b).cola_bien[indice(old(b).cola_bien, p)+1..|old(b).cola_bien|] &&
+                b.cola_prole == old(b).cola_prole
+            else
+                b.cola_prole == old(b).cola_prole[0..indice(old(b).cola_prole, p)] + old(b).cola_prole[indice(old(b).cola_prole, p)+1..|old(b).cola_prole|] &&
+                b.cola_bien == old(b).cola_bien
+            fi
+        }
+        asegura {b.caja_A_libre == old(b).caja_A_libre && b.caja_B_libre == old(b).caja_B_libre}
+    }
+
+    proc liberar_caja_A(inout b: BancoClasista) {
+        requiere {b == old(b)}
+        asegura {b.caja_A_libre == True}
+        asegura {b.cola_bien == old(b).cola_bien && b.cola_prole == old(b).cola_prole && b.caja_B_libre == old(b).caja_B_libre}
+    }
+
+    proc liberar_caja_B(inout b: BancoClasista) {
+        requiere {b == old(b)}
+        asegura {b.caja_B_libre == True}
+        asegura {b.cola_bien == old(b).cola_bien && b.cola_prole == old(b).cola_prole && b.caja_A_libre == old(b).caja_A_libre}
+    }
+
+    proc desencolar_bien(inout b: BancoClasista) {
+        requiere {b == old(b) && (b.caja_A_libre == True || b.caja_B_libre == True) && b.cola_bien != []}
+        asegura {
+            if old(b).caja_A_libre == True then
+                b.caja_A_libre == False && b.cola_bien == old(b).cola_bien[1..|old(b).cola_bien|] &&
+                b.caja_B_libre == old(b).caja_B_libre && b.cola_prole == old(b).cola_prole
+            else
+                b.caja_B_libre == False && b.cola_prole == old(b).cola_bien[1..|old(b).cola_bien|] &&
+                b.caja_A_libre == False && b.cola_prole == old(b).cola_prole
+            fi
+        }
+        asegura {b.caja_B_libre == old(b).caja_B_libre && b.cola_prole == old(b).cola_prole}
+    }
+
+    proc desencolar_prole(inout b: BancoClasista) {
+        requiere {b == old(b) && b.caja_B_libre == True && b.cola_prole != [] && b.cola_bien == []}
+        asegura {b.caja_B_libre == False && b.cola_prole == old(b).cola_prole[1..|old(b).cola_prole|]}
+        asegura {b.caja_A_libre == old(b).caja_A_libre && b.cola_bien == old(b).cola_bien}
+    }
+
+    aux indice(cola: seq<Persona>, p: Persona): int = sum i: int :: 0 <= i < |cola| &&L cola[i] == p :: i
+}
+
+10.
+TAD ColaBañoExamen {
+    obs alumnos: conj<Alumno>
+    obs veces_baño: dict<Alumno, int>
+    obs cola: seq<Alumno>
+    obs alumno_en_baño: seq<Alumno>
+    obs max_baño: int
+    info: Alumno es int (dni)
+
+    proc crear(in max_baño_: int, in alumnos_: conj<Alumno> out c: ColaBañoExamen) {
+        requiere {max_baño_ > 0}
+        asegura {c.alumnos == alumnos_ && c.cola == [] && c.alumno_en_baño == [] && c.max_baño == max_baño_}
+        asegura {forall a: Alumno :: a in c.veces_baño <==> a in alumnos_}
+        asegura {forall a: Alumno :: a in c.veces_baño ==>L c.veces_baño[a] == 0}
+    }
+
+    proc encolar(inout c: ColaBañoExamen, in a: Alumno) {
+        requiere {c == old(c) && a in c.alumnos &&L c.veces_baño[a] <= c.max_baño && !(a in c.cola)}
+        asegura {c.cola == old(c).cola + [a]}
+        asegura {c.alumnos == old(c).alumnos && c.veces_baño == old(c).veces_baño && c.alumno_en_baño == old(c).alumno_en_baño && c.max_baño == old(c).max_baño}        
+    }
+
+    proc abandonar_cola(inout c: ColaBañoExamen, in a: Alumno) { 
+        requiere {c == old(c) && a in c.cola}
+        asegura {old(c).cola[0..indice(old(c).cola, a)] + old(c).cola[indice(old(c).cola, a)+1..|old(c).cola|]}
+        asegura {c.alumnos == old(c).alumnos && c.veces_baño == old(c).veces_baño && c.alumno_en_baño == old(c).alumno_en_baño && c.max_baño == old(c).max_baño}  
+    }
+
+    proc regresar_del_baño_y_desencolar(inout c: ColaBañoExamen) { /* acoplados para garantizar el caracter "automático" y no permitir comportamientos prohibidos por la especificación informal del problema - en este caso, que en un momento dado el baño esté vacío y la cola no */
+        requiere {c == old(c)}
+        asegura {
+            if old(c).cola != [] then
+                c.veces_baño == setKey(old(c).veces_baño, old(c).cola[0], old(c).veces_baño[old(c).cola[0]] + 1) &&
+                c.alumno_en_baño == [old(c).cola[0]] &&
+                c.cola == old(c).cola[1..|old(c).cola|]
+            else
+                c.veces_baño == old(c).veces_baño &&
+                c.alumno_en_baño == [] &&
+                c.cola == []
+            fi
+        }
+        asegura {c.alumnos == old(c).alumnos && c.max_baño == old(c).max_baño}
+    }
+
+    aux indice(cola: seq<Alumno>, a: Alumno): int = sum i: int :: 0 <= i < |cola| &&L cola[i] == a :: i
+}
+
+11.
+TAD EmpresaTaD {
+    obs tecnicos_disp: int
+    obs tecnicos_asig: int
+    obs pendientes: seq<Domicilio>
+    info: Domicilio es seq<char> (identificador único del domicilio)
+
+    proc crear(in tecnicos_disp_: int, out e: EmpresaTaD) {
+        requiere {tecnicos_disp > 0}
+        asegura {e.tecnicos_disp == tecnicos_disp_ && e.tecnicos_asig == 0 && e.pendientes == []}
+    }
+
+    proc recibir_procesar_pedido(inout e: EmpresaTaD, in d: Domicilio) {
+        requiere {e == old(e)}
+        asegura {
+            if old(e).tecnicos_disp > 0 then
+                e.tecnicos_disp == old(e).tecnicos_disp - 1 && e.tecnicos_asig == old(e).tecnicos_asig + 1 && e.pendientes == old(e).pendientes
+            else
+                e.tecnicos_disp == 0 && && e.tecnicos_asig == old(e).tecnicos_asig && e.pendientes == old(e).pendientes + [d]
+            fi
+        }
+    }
+
+    proc resolver_problema_redirigir_tecnico(inout e: EmpresaTaD) {
+        requiere {e == old(e)}
+        asegura {
+            if old(e).pendientes != [] then
+                e.pendientes == old(e).pendientes[1..|old(e).pendientes|] &&
+                e.tecnicos_disp == old(e).tecnicos_disp && e.tecnicos_asig == old(e).tecnicos_asig
+            else
+                e.pendientes == old(e).pendientes &&
+                e.tecnicos_disp == old(e).tecnicos_disp + 1 && e.tecnicos_asig == old(e).tecnicos_asig - 1
+            fi
+        }
     }
 }
