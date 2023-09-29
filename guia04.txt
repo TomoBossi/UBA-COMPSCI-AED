@@ -149,7 +149,8 @@ TAD Multiconjunto<T> {
 
     proc remover_uno(inout mc: Multiconjunto<T>, in e: T) {
         requiere {mc == old(mc)}
-        asegura {if old(mc).cantidad(e) > 0 then mc.cantidad(e) == old(mc).cantidad(e) - 1 else mc.cantidad(e) == 0 fi}
+        asegura {old(mc).cantidad(e) > 0 ==> mc.cantidad(e) == old(mc).cantidad(e) - 1}
+        asegura {old(mc).cantidad(e) <= 0 ==> mc.cantidad(e) == 0}
         asegura {forall elem: T :: elem != e ==> mc.cantidad(elem) == old(mc).cantidad(elem)}
     }
 
@@ -161,7 +162,7 @@ TAD Multiconjunto<T> {
 
     proc pertenece(in mc: Multiconjunto<T>, in e: T, out res: bool) {
         requiere {True}
-        asegura {if mc.cantidad(e) > 0 then res == True else res == False fi}
+        asegura {res == True <==> mc.cantidad(e) > 0}
     }
 
     proc cantidad_elementos_totales(in mc: Multiconjunto<T>, out res: int) {
@@ -250,7 +251,7 @@ TAD Cola<T> {
 
     proc vacia(in c: Cola<T>, out res: bool) {
         requiere {True}
-        asegura {if c.elems == [] then res == True else res == False fi}
+        asegura {res == True <==> c.elems == []}
     }
 
     proc encolar(inout c: Cola<T>, in e: T) {
@@ -275,7 +276,7 @@ TAD CacheFIFO<T> { /* ColaFinita<T> */
 
     proc vacia(in c: CacheFIFO<T>, out res: bool) {
         requiere {True}
-        asegura {if c.elems == [] then res == True else res == False fi}
+        asegura {res == True <==> c.elems == []}
     }
 
     proc encolar(inout c: CacheFIFO<T>, in e: T) {
@@ -357,7 +358,7 @@ TAD Pila<T> {
 
     proc vacia(in p: Pila<T>, out res: bool) {
         requiere {True}
-        asegura {if p.info["cantidad"] == 0 then res == True else res == False}
+        asegura {res == True <==> p.info["cantidad"] == 0}
     }
 
     proc apilar(inout c: Pila<T>, in e: T) {
