@@ -206,37 +206,34 @@ TAD Multidict<K, V> {
 }
 
 3.a.
-TAD CacheTTL<T> {
-    obs datos: conj<struct<dato: T, hora: float>>
-    obs tiempo_de_vida: float
+TAD CacheTTL<K, V> {
+    obs datos: dict<K, V>
+    obs tiempos_agregado: dict<K, float>
+    obs ttl: float
 
-    proc crear(in tiempo_de_vida_: float, out c: CacheTTL<T>) {
-        requiere {tiempo_de_vida_ > 0}
-        asegura {c.datos == {} && c.tiempo_de_vida == tiempo_de_vida_}
+    proc crear(in ttl_: float, out c: CacheTTL<K, V>) {
+        requiere {ttl_ > 0}
+        asegura {c.datos == {} && c.ttl == ttl_ && c.tiempos_agregado == {}}
     }
-
-    proc agregar(inout c: CacheTTL<T>, in d: T) {
-        requiere {c == old(c)}
-        asegura {c.datos.elems == old(c).datos + {<dato: d, hora: now()>}}
-        asegura {c.tiempo_de_vida == old(c).tiempo_de_vida}
-    }
-
-    proc remover(inout c: CacheTTL<T>) { /* asumo que se ejecuta periodicamente y automáticamente */
-        requiere {c == old(c)}
-        asegura {
-            forall d: T, h: float :: (!(<dato: d, hora: h> in old(c).datos) || (h < now() - c.tiempo_de_vida)) ==>L
-                !(<dato: d, hora: h> in c.datos)
-        }
-        asegura {
-            forall d: T, h: float :: ((<dato: d, hora: h> in old(c).datos) && (h >= now() - c.tiempo_de_vida)) ==>L
-                (<dato: d, hora: h> in c.datos)
-        }
-        asegura {c.tiempo_de_vida == old(c).tiempo_de_vida}
-    }
-
-    proc acceder(in c: CacheTTL<T>, out res: conj<struct<dato: T, hora: float>>) {
+    
+    proc esta(in c: CacheTTL<K, V>, in k: K) {
         requiere {True}
-        asegura {res == c.datos}
+        asegura {res == True <==> (k in c.datos &&L now() - c.tiempos_agregado[k] < c.ttl)}
+    }
+    
+    proc definir(inout c: CacheTTL<K, V>, in k: K, in v: V) {
+        requiere {c == old(c)}
+        asegura {c.datos == setKey(old(c).datos, k, v) && c.tiempos_agregado == setKey(old(c).tiempos_agregado, k, now()) && c.ttl == old(c).ttl}
+    }
+    
+    proc obtener(in c: CacheTTL<K, V>, in k: K, out res: V) {
+        requiere {k in c.datos &&L now() - c.tiempos_agregado[k] < c.ttl}
+        asegura {res == c.datos[k]}
+    }
+    
+    proc borrar(inout c: CacheTTL<K, V>, in k: K) {
+        requiere {c == old(c) && k in c.datos}
+        asegura {c.datos == delKey(old(c).datos, k) && c.tiempos_agregado == delKey(old(c).tiempos_agregado, k) && c.ttl == old(c).ttl}
     }
 }
 
