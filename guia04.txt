@@ -210,7 +210,7 @@ TAD CacheTTL<T> {
     obs tiempo_de_vida: float
 
     proc crear(in tiempo_de_vida_: float, out c: CacheTTL<T>) {
-        requiere {True}
+        requiere {tiempo_de_vida_ > 0}
         asegura {c.datos == {} && c.tiempo_de_vida == tiempo_de_vida_}
     }
 
@@ -281,11 +281,8 @@ TAD CacheFIFO<T> { /* ColaFinita<T> */
     proc encolar(inout c: CacheFIFO<T>, in e: T) {
         requiere {c == old(c)}
         asegura {
-            if |old(c).elems| < c.max then 
-                c.elems == old(c).elems + [e]
-            else 
-                c.elems == old(c).elems[1..|old(c).elems|] + [e]
-            fi
+            (|old(c).elems| < c.max ==> c.elems == old(c).elems + [e]) &&
+            (|old(c).elems| >= c.max ==> c.elems == old(c).elems[1..|old(c).elems|] + [e]
         }
         asegura {c.max == old(c).max}
     }
@@ -334,11 +331,8 @@ TAD CacheLRU<T> {
     proc agregar(inout c: CacheLRU<T>, in d: T) {
         requiere {c == old(c)}
         asegura {
-            if |old(c).datos| < c.max then 
-                c.datos == old(c).datos + [<dato: e, hora: now()>]
-            else 
-                c.datos == old(c).datos[1..|old(c).datos|] + [<dato: e, hora: now()>]
-            fi
+            (|old(c).datos| < c.max ==> c.datos == old(c).datos + [<dato: e, hora: now()>]) &&
+            (|old(c).datos| >= c.max ==> c.datos == old(c).datos[1..|old(c).datos|] + [<dato: e, hora: now()>])
         }
         asegura {c.max == old(c).max}
     }
@@ -562,11 +556,11 @@ TAD Stock<T> {
     obs productos: dict<Producto, int> /* {producto: cantidad en stock} */
     obs historial_compra: dict<Producto, seq<int>>
     obs historial_venta: dict<Producto, seq<int>>
-    obs sustitutos: dict<Producto, Producto> /* producto sustituido: producto sustituto, interpreté que cada producto puede tener como máximo un sustituto */
+    obs sustitutos: dict<Producto, Producto> /* producto sustituido: producto sustituto */
     info: Producto es T
 
     proc crear(in min_: int, out s: Stock) {
-        requiere {True}
+        requiere {min_ > 0}
         asegura {s.min == min_ && s.productos == {} && s.sustitutos == {} && s.historial_compra == {} && s.historial_venta == {}}
     }
 
@@ -587,15 +581,29 @@ TAD Stock<T> {
     }
 
     proc vender_producto(inout s: Stock, in p: Producto, in q: int) {
-        requiere {s == old(s) && p in s.productos &&L q <= s.productos[p]}
-        asegura {s.productos == setKey(old(s).productos, p, old(s).productos[p] - q)}
-        asegura {s.historial_venta == setKey(old(s).historial_venta, p, old(s).historial_venta[p] + [q])}
+        requiere {
+            s == old(s) && p in s.productos &&L 
+            (p in s.sustitutos ==> q <= s.productos[p] + s.productos[s.sustitutos[p]]) && (!(p in s.sustitutos) ==> q <= s.productos[p])
+        }
+        asegura {
+            (q <= s.productos[p] ==>
+                s.productos == setKey(old(s).productos, p, old(s).productos[p] - q) &&
+                s.historial_venta == setKey(old(s).historial_venta, p, old(s).historial_venta[p] + [q])) &&
+            (q > s.productos[p] ==>
+                s.productos[p] == 0 && s.productos[psus] == old(s).productos[psus] - (q - old(s).productos[p]) &&
+                s.historial_venta[p] == old(s).historial_venta[p] + old(s).productos[p] &&
+                s.historial_venta[psus] == old(s).historial_venta[psus] + (q - old(s).productos[p]) &&
+                (forall prod: Producto :: prod in old(s).productos && prod != p && prod != psus ==>L prod in s.productos && s.productos[prod] == old(s).productos[prod])
+                (forall prod: Producto :: !(prod in old(s).productos) ==>L !(prod in s.productos)) &&
+                (forall prod: Producto :: prod in old(s).historial_venta && prod != p && prod != psus ==>L prod in s.historial_venta && s.historial_venta[prod] == old(s).historial_venta[prod]) &&
+                (forall prod: Producto :: !(prod in old(s).historial_venta) ==>L !(prod in s.historial_venta)))
+        }
         asegura {s.historial_compra == old(s).historial_compra}
         asegura {s.sustitutos == old(s).sustitutos}
     }
 
     proc informar_sustituto(inout s: Stock, in p, psus: Producto) {
-        requiere {s == old(s) && p in s.productos && psus in s.productos}
+        requiere {s == old(s) && p in s.productos && psus in s.productos &&L no_es_sustituto_de_otro(s.sustitutos, p, psus)}
         asegura {s.sustitutos == setKey(old(s).sustitutos, p, psus)}
         asegura {s.productos == old(s).productos}
         asegura {s.historial_compra == old(s).historial_compra}
@@ -605,6 +613,10 @@ TAD Stock<T> {
     proc productos_escasos(in s: Stock, out res: conj<Producto>) {
         requiere {True}
         asegura {forall p: Producto :: p in s.productos &&L escaso(s, p) <==> p in res}
+    }
+
+    pred no_es_sustituto_de_otro(s: dict<Producto, Producto>, p, psus: Producto) {
+        !(exists prod: Producto :: (prod in s && prod != p) &&L s[prod] == psus)
     }
 
     pred escaso(s: Stock, p: Producto) {
@@ -644,15 +656,14 @@ TAD Oca {
     proc jugar_un_turno(inout o: Oca, in dado: int) {
         requiere {o == old(o) && !hay_ganador(o)}
         asegura {
-            if old(o).turno%2 == 0 then
+            (old(o).turno%2 == 0 ==>
                 o.posiciones == <o.tablero.saltos[old(o).posiciones[0] + dado], old(o).posiciones[1]>
                 o.historial_posiciones == <old(o).historial_posiciones[0] + [posiciones[0]], old(o).historial_posiciones[1]>
-                o.historial_dados == <old(o).historial_dados[0] + [dado], old(o).historial_dados[1]>
-            else
+                o.historial_dados == <old(o).historial_dados[0] + [dado], old(o).historial_dados[1]>) &&
+            (old(o).turno%2 == 1 ==>
                 o.posiciones == <old(o).posiciones[0], o.tablero.saltos[old(o).posiciones[1] + dado]>
                 o.historial_posiciones == <old(o).historial_posiciones[0], old(o).historial_posiciones[1] + [posiciones[1]]>
-                o.historial_dados == <old(o).historial_dados[0], old(o).historial_dados[1] + [dado]>
-            fi
+                o.historial_dados == <old(o).historial_dados[0], old(o).historial_dados[1] + [dado]>)
         }
         asegura {o.tablero == old(o).tablero}
         asegura {o.turno == old(o).turno + 1}
@@ -698,13 +709,12 @@ TAD BancoClasista {
     proc encolar(inout b: BancoClasista, in p: Persona) {
         requiere {b == old(b) && !(exists p_cola: Persona :: (p_cola in b.cola_bien || p_cola in b.cola_prole) &&L p_cola.dni == p.dni)}
         asegura {
-            if p.tipo == "bien" then
+            (p.tipo == "bien" ==>
                 b.cola_bien == old(b).cola_bien + [p] &&
-                b.cola_prole == old(b).cola_prole
-            else
+                b.cola_prole == old(b).cola_prole) &&
+            (p.tipo == "prole" ==>
                 b.cola_prole == old(b).cola_prole + [p] &&
-                b.cola_bien == old(b).cola_bien
-            fi
+                b.cola_bien == old(b).cola_bien)
         }
         asegura {b.caja_A_libre == old(b).caja_A_libre && b.caja_B_libre == old(b).caja_B_libre}
     }
@@ -712,13 +722,12 @@ TAD BancoClasista {
     proc abandonar_cola(inout b: BancoClasista, in p: Persona) {
         requiere {b == old(b) && (p in b.cola_bien || p in b.cola_prole)}
         asegura {
-            if p in old(b).cola_bien then
+            (p in old(b).cola_bien ==>
                 b.cola_bien == old(b).cola_bien[0..indice(old(b).cola_bien, p)] + old(b).cola_bien[indice(old(b).cola_bien, p)+1..|old(b).cola_bien|] &&
-                b.cola_prole == old(b).cola_prole
-            else
+                b.cola_prole == old(b).cola_prole) &&
+            (!(p in old(b).cola_bien) && p in old(b).cola_prole ==>
                 b.cola_prole == old(b).cola_prole[0..indice(old(b).cola_prole, p)] + old(b).cola_prole[indice(old(b).cola_prole, p)+1..|old(b).cola_prole|] &&
-                b.cola_bien == old(b).cola_bien
-            fi
+                b.cola_bien == old(b).cola_bien)
         }
         asegura {b.caja_A_libre == old(b).caja_A_libre && b.caja_B_libre == old(b).caja_B_libre}
     }
@@ -738,13 +747,12 @@ TAD BancoClasista {
     proc desencolar_bien(inout b: BancoClasista) {
         requiere {b == old(b) && (b.caja_A_libre == True || b.caja_B_libre == True) && b.cola_bien != []}
         asegura {
-            if old(b).caja_A_libre == True then
+            (old(b).caja_A_libre == True ==>
                 b.caja_A_libre == False && b.cola_bien == old(b).cola_bien[1..|old(b).cola_bien|] &&
-                b.caja_B_libre == old(b).caja_B_libre && b.cola_prole == old(b).cola_prole
-            else
+                b.caja_B_libre == old(b).caja_B_libre && b.cola_prole == old(b).cola_prole) &&
+            (!old(b).caja_A_libre && old(b).caja_B_libre ==>
                 b.caja_B_libre == False && b.cola_prole == old(b).cola_bien[1..|old(b).cola_bien|] &&
-                b.caja_A_libre == False && b.cola_prole == old(b).cola_prole
-            fi
+                b.caja_A_libre == False && b.cola_prole == old(b).cola_prole)
         }
         asegura {b.caja_B_libre == old(b).caja_B_libre && b.cola_prole == old(b).cola_prole}
     }
@@ -789,15 +797,14 @@ TAD ColaBañoExamen {
     proc regresar_del_baño_y_desencolar(inout c: ColaBañoExamen) { /* acoplados para garantizar el caracter "automático" y no permitir comportamientos prohibidos por la especificación informal del problema - en este caso, que en un momento dado el baño esté vacío y la cola no */
         requiere {c == old(c)}
         asegura {
-            if old(c).cola != [] then
+            (old(c).cola != [] ==>
                 c.veces_baño == setKey(old(c).veces_baño, old(c).cola[0], old(c).veces_baño[old(c).cola[0]] + 1) &&
                 c.alumno_en_baño == [old(c).cola[0]] &&
-                c.cola == old(c).cola[1..|old(c).cola|]
-            else
+                c.cola == old(c).cola[1..|old(c).cola|]) &&
+            (old(c).cola == [] ==>
                 c.veces_baño == old(c).veces_baño &&
                 c.alumno_en_baño == [] &&
-                c.cola == []
-            fi
+                c.cola == [])
         }
         asegura {c.alumnos == old(c).alumnos && c.max_baño == old(c).max_baño}
     }
@@ -820,24 +827,22 @@ TAD EmpresaTaD {
     proc recibir_procesar_pedido(inout e: EmpresaTaD, in d: Domicilio) {
         requiere {e == old(e)}
         asegura {
-            if old(e).tecnicos_disp > 0 then
-                e.tecnicos_disp == old(e).tecnicos_disp - 1 && e.tecnicos_asig == old(e).tecnicos_asig + 1 && e.pendientes == old(e).pendientes
-            else
-                e.tecnicos_disp == 0 && && e.tecnicos_asig == old(e).tecnicos_asig && e.pendientes == old(e).pendientes + [d]
-            fi
+            (old(e).tecnicos_disp > 0 ==>
+                e.tecnicos_disp == old(e).tecnicos_disp - 1 && e.tecnicos_asig == old(e).tecnicos_asig + 1 && e.pendientes == old(e).pendientes) &&
+            (old(e).tecnicos_disp == 0 ==>
+                e.tecnicos_disp == 0 && && e.tecnicos_asig == old(e).tecnicos_asig && e.pendientes == old(e).pendientes + [d])
         }
     }
 
     proc resolver_problema_redirigir_tecnico(inout e: EmpresaTaD) {
         requiere {e == old(e)}
         asegura {
-            if old(e).pendientes != [] then
+            (old(e).pendientes != [] ==>
                 e.pendientes == old(e).pendientes[1..|old(e).pendientes|] &&
-                e.tecnicos_disp == old(e).tecnicos_disp && e.tecnicos_asig == old(e).tecnicos_asig
-            else
+                e.tecnicos_disp == old(e).tecnicos_disp && e.tecnicos_asig == old(e).tecnicos_asig) &&
+            (old(e).pendientes == [] ==>
                 e.pendientes == old(e).pendientes &&
-                e.tecnicos_disp == old(e).tecnicos_disp + 1 && e.tecnicos_asig == old(e).tecnicos_asig - 1
-            fi
+                e.tecnicos_disp == old(e).tecnicos_disp + 1 && e.tecnicos_asig == old(e).tecnicos_asig - 1)
         }
     }
 }
