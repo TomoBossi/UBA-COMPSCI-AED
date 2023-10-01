@@ -631,7 +631,7 @@ TAD Tablero {
     info: Baldosa es int
 
     proc crear(in llegada_: Baldosa, in saltos_: dict<Baldosa, Baldosa>, out t: Tablero) {
-        requiere {llegada_ > 0 && forall b: Baldosa :: b in saltos_ ==>L 0 <= b, saltos_[b] <= llegada_}
+        requiere {llegada_ > 6 && forall b: Baldosa :: b in saltos_ ==>L 0 <= b, saltos_[b] <= llegada_}
         asegura {t.partida == 0 && t.llegada == llegada_ && t.saltos == saltos_}
     }
 }
@@ -646,20 +646,20 @@ TAD Oca {
     info: Baldosa es int
 
     proc crear(in llegada_: Baldosa, in saltos_: dict<Baldosa, Baldosa>, out o: Oca) {
-        requiere {llegada_ > 0 && forall b: Baldosa :: b in saltos_ ==>L 0 <= b, saltos_[b] <= llegada_}
+        requiere {llegada_ > 6 && forall b: Baldosa :: b in saltos_ ==>L 0 <= b, saltos_[b] <= llegada_}
         asegura {o.tablero.partida == 0 && o.tablero.llegada == llegada_ && o.tablero.saltos == saltos_}
         asegura {o.posiciones == <0, 0> && o.turno == 0 && o.historial_posiciones == <[], []> && o.historial_dados == <[], []>}
     }
 
     proc jugar_un_turno(inout o: Oca, in dado: int) {
-        requiere {o == old(o) && !hay_ganador(o)}
+        requiere {o == old(o) && && 1 <= dado <= 6 !hay_ganador(o)}
         asegura {
             (old(o).turno%2 == 0 ==>
-                o.posiciones == <o.tablero.saltos[old(o).posiciones[0] + dado], old(o).posiciones[1]>
+                o.posiciones == <o.tablero.saltos[desplazamiento(dado, old(o).posiciones[0], o.tablero.llegada)], old(o).posiciones[1]>
                 o.historial_posiciones == <old(o).historial_posiciones[0] + [posiciones[0]], old(o).historial_posiciones[1]>
                 o.historial_dados == <old(o).historial_dados[0] + [dado], old(o).historial_dados[1]>) &&
             (old(o).turno%2 == 1 ==>
-                o.posiciones == <old(o).posiciones[0], o.tablero.saltos[old(o).posiciones[1] + dado]>
+                o.posiciones == <old(o).posiciones[0], o.tablero.saltos[desplazamiento(dado, old(o).posiciones[1], o.tablero.llegada)]>
                 o.historial_posiciones == <old(o).historial_posiciones[0], old(o).historial_posiciones[1] + [posiciones[1]]>
                 o.historial_dados == <old(o).historial_dados[0], old(o).historial_dados[1] + [dado]>)
         }
@@ -678,8 +678,10 @@ TAD Oca {
     }
 
     pred hay_ganador(o: Oca) {
-        o.posiciones[0] >= o.tablero.llegada || o.posiciones[1] >= o.tablero.llegada
+        o.posiciones[0] == o.tablero.llegada || o.posiciones[1] == o.tablero.llegada
     }
+
+    aux desplazamiento(dado, pos, max: int) = if dado + pos <= max then dado + pos else 2*max - (dado + pos)
 }
 
 9.
@@ -839,7 +841,7 @@ TAD EmpresaTaD {
                 e.pendientes == old(e).pendientes[1..|old(e).pendientes|] &&
                 e.tecnicos_disp == old(e).tecnicos_disp && e.tecnicos_asig == old(e).tecnicos_asig) &&
             (old(e).pendientes == [] ==>
-                e.pendientes == old(e).pendientes &&
+                e.pendientes == [] &&
                 e.tecnicos_disp == old(e).tecnicos_disp + 1 && e.tecnicos_asig == old(e).tecnicos_asig - 1)
         }
     }
