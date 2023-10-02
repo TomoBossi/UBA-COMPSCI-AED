@@ -262,83 +262,103 @@ TAD Cola<T> {
     }
 }
 
-TAD CacheFIFO<T> { /* ColaFinita<T> */
+TAD CacheFIFO<K, V> {
+    obs datos: dict<K, V>
+    obs orden_agregado: seq<K>
     obs max: int
-    obs elems: seq<T>
 
     proc crear(in max_: int, out c: CacheFIFO<T>) {
         requiere {True}
-        asegura {c.elems == [] && c.max == max_}
+        asegura {c.datos == {} && c.max == max_ && c.orden_agregado == []}
     }
 
-    proc vacia(in c: CacheFIFO<T>, out res: bool) {
+    proc vacio(in c: CacheFIFO<T>, out res: bool) {
         requiere {True}
-        asegura {res == True <==> c.elems == []}
+        asegura {res == True <==> c.datos == {}}
     }
 
-    proc encolar(inout c: CacheFIFO<T>, in e: T) {
-        requiere {c == old(c)}
+    proc esta(in c: CacheFIFO<K, V>, in k: K) {
+        requiere {True}
+        asegura {res == True <==> k in c.datos}
+    }
+
+    proc definir(inout c: CacheFIFO<K, V>, in k: K, in v: V) {
+        requiere {c == old(c) && !(k in c.datos)}
         asegura {
-            (|old(c).elems| < c.max ==> c.elems == old(c).elems + [e]) &&
-            (|old(c).elems| >= c.max ==> c.elems == old(c).elems[1..|old(c).elems|] + [e]
+            (|old(c).datos| == c.max ==>L 
+                c.datos == setKey(delKey(old(c).datos, old(c).orden_agregado[0]), k, v) &&
+                c.orden_agregado == old(c).orden_agregado[1..|old(c).orden_agregado|] + [k]) &&
+            (|old(c).datos| < c.max ==>L
+                c.datos == setKey(old(c).datos, k, v) &&
+                c.orden_agregado == old(c).orden_agregado + [k])
         }
         asegura {c.max == old(c).max}
     }
 
-    proc desencolar(inout c: CacheFIFO<T>, out res: T) {
-        requiere {c == old(c) && |c.elems| > 0}
-        asegura {c.elems == old(c).elems[1..|old(c).elems|] && res = old(c).elems[0]}
-        asegura {c.max == old(c).max}
+    proc obtener(in c: CacheFIFO<K, V>, in k: K, out res: V) {
+        requiere {k in c.datos}
+        asegura {res == c.datos[k]}
     }
 
-    proc remover(inout c: CacheFIFO<T>, in i: int, out res: T) {
-        requiere {c == old(c) && 0 <= i < |c.elems|}
-        asegura {res == c.elems[i]}
-        asegura {c.elems == old(c).elems[0..i] + old(c).elems[i+1..|old(c).elems|]}
-        asegura {c.max == old(c).max}
+    proc borrar(inout c: CacheFIFO<K, V>, in k: K) {
+        requiere {c == old(c) && k in c.datos}
+        asegura {
+            c.datos == delKey(old(c).datos, k) && 
+            c.tiempos_agregado == 
+                old(c).tiempos_agregado[0..indice(old(c).tiempos_agregado, k)] + 
+                old(c).tiempos_agregado[indice(old(c).tiempos_agregado, k)+1..|old(c).tiempos_agregado|] &&
+            c.max == old(c).max
+        }
     }
 
-    proc acceder(in c: CacheFIFO<T>, out res: seq<T>) {
-        requiere {True}
-        asegura {res == c.elems}
-    }
+    aux indice(s: seq<K>, k: K): int = sum i: int :: 0 <= i < |s| :: if s[i] == k then i else 0
 }
 
 3.c.
-TAD CacheLRU<T> {
-    obs datos: seq<struct<dato: T, hora: float>>
+TAD CacheLRU<K, V> {
+    obs datos: dict<K, V>
+    obs accedido: dict<K, float>
     obs max: int
 
     proc crear(in max_: int, out c: CacheLRU<T>) {
         requiere {True}
-        asegura {c.datos == [] && c.max == max_}
+        asegura {c.datos == {} && c.accedido == {} && c.max == max_}
     }
 
-    proc tamaño(in c: CacheLRU<T>, out res: int) {
+    proc esta(in c: CacheLRU<K, V>, in k: K) {
         requiere {True}
-        asegura {res == |c.datos|}
+        asegura {res == True <==> k in c.datos}
     }
 
-    proc acceder(inout c: CacheLRU<T>, in i: int, out res: T) {
-        requiere {c == old(c) && 0 <= i < |c.datos|}
-        asegura {res == old(c).datos[i].dato}
-        asegura {c.datos == old(c).datos[0..i] + old(c).datos[i+1..|old(c).datos|] + [<dato: res, hora: now()>]}
+    proc obtener(inout c: CacheLRU<K, V>, in k: K, out res: V) {
+        requiere {k in c.datos}
+        asegura {res == c.datos[k]}
+        asegura {c.accedido == setKey(old(c).accedido, k, now())}
+        asegura {c.max == old(c).max && c.datos == old(c).datos}
+    }
+
+    proc borrar(inout c: CacheLRU<K, V>, in k: K) {
+        asegura {c.datos == delKey(old(c).datos, k)}
+        asegura {c.accedido == delKey(old(c).accedido, k)}
         asegura {c.max == old(c).max}
     }
 
-    proc agregar(inout c: CacheLRU<T>, in d: T) {
-        requiere {c == old(c)}
+    proc definir(inout c: CacheLRU<K, V>, in k: K k, in v: V) {
+        asegura {|c.datos| < c.max ==> c.datos == setKey(old(c).datos, k, v)}
         asegura {
-            (|old(c).datos| < c.max ==> c.datos == old(c).datos + [<dato: e, hora: now()>]) &&
-            (|old(c).datos| >= c.max ==> c.datos == old(c).datos[1..|old(c).datos|] + [<dato: e, hora: now()>])
+            |c.datos| == c.max ==> (
+                (k in c.datos &&L c.datos[k] == v) &&
+                (exists k_: K :: k_ in old(c).datos &&L (esMin(old(c).accedido, k_) && !(k_ in c.datos))) &&
+                (forall k_: K :: (k_ in old(c).datos &&L !esMin(old(c).accedido, k_)) ==>L (k_ in c.datos &&L c.datos[k_] == old(c).datos[k_])) &&
+                (forall k_: K :: k_ in c.datos ==>L (k_ in old(c).datos || k_ == k))
+            )
         }
+        asegura {c.accedido == setKey(old(c).accedido, k, now())}
         asegura {c.max == old(c).max}
     }
 
-    proc remover(inout c: CacheLRU<T>, in d: T) {
-        requiere {c == old(c) && |c.datos| > 0}
-        asegura {c.datos == old(c).datos[1..|old(c).datos|]}
-        asegura {c.max == old(c).max}
+    pred esMin(d: dict<K, real>, k: K) {
+        forall k_: K :: k_ in d ==>L d[k] <= d[k_]
     }
 }
 
