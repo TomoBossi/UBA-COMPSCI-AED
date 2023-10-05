@@ -20,62 +20,62 @@ TAD Conjunto<T> {
 }
 
 TAD Punto {
-    obs x: float
-    obs y: float
+    obs x: real
+    obs y: real
 
-    proc nuevoPunto(in px: float, in py: float, out p: Punto) {
+    proc nuevoPunto(in px: real, in py: real, out p: Punto) {
         requiere {True}
         asegura {p.x == px && p.y == py}
     }
 
-    proc coordX(in p: Punto, out res: float) {
+    proc coordX(in p: Punto, out res: real) {
         requiere {True}
         asegura {res == p.x}
     }
 
-    proc coordY(in p: Punto, out res: float) {
+    proc coordY(in p: Punto, out res: real) {
         requiere {True}
         asegura {res == p.y}
     }
 
-    proc coordTheta(in p: Punto, out res: float) {
+    proc coordTheta(in p: Punto, out res: real) {
         requiere {True}
         asegura {res == safearctan(p.x, p.y)}
     }
 
-    proc coordRho(in p: Punto, out res: float) {
+    proc coordRho(in p: Punto, out res: real) {
         requiere {True}
         asegura {res == sqrt(p.x**2 + p.y**2)}
     }
 
-    proc mover(inout p: Punto, in deltaX, deltaY: float) {
+    proc mover(inout p: Punto, in deltaX, deltaY: real) {
         requiere {p == old(p)}
         asegura {p.x == old(p) + deltaX && p.y == old(p) + deltaY}
     }
 
-    aux safearctan(x, y: float): float = if x == 0 then signo(y)*pi/2 else arctan(y/x) fi
+    aux safearctan(x, y: real): real = if x == 0 then signo(y)*pi/2 else arctan(y/x) fi
 }
 
 1.a.
 TAD Rectangulo2D {
     obs cs: tupla<struct<x: R, y: R>, struct<x: R, y: R>, struct<x: R, y: R>, struct<x: R, y: R>>
 
-    proc crear(in c1x, c1y, c2x, c2y, c3x, c3y, c4x, c4y: float, out r: Rectangulo2D) {
+    proc crear(in c1x, c1y, c2x, c2y, c3x, c3y, c4x, c4y: real, out r: Rectangulo2D) {
         requiere {True}
         asegura {r.cs == <<x: c1x, y: c1y>, <x: c2x, y: c2y>, <x: c3x, y: c3y>, <x: c4x, y: c4y>>}  
     }
 
-    proc trasladar(inout r: Rectangulo2D, in dx: float, in dy: float) {
+    proc trasladar(inout r: Rectangulo2D, in dx: real, in dy: real) {
         requiere {r == old(r)}
         asegura {forall i: int :: (0 <= i < 4) ==>L (r.cs[i].x == old(r).cs[i].x + dx && r.cs[i].y == old(r).cs[i].y + dy)}
     }
 
-    proc escalar(inout r: Rectangulo2D, in k: float) {
+    proc escalar(inout r: Rectangulo2D, in k: real) {
         requiere {r == old(r) && k > 0}
         asegura {forall i: int :: (0 <= i < 4) ==>L (r.cs[i].x == k*old(r).cs[i].x && r.cs[i].y == k*old(r).cs[i].y)}
     }
 
-    proc rotar(inout r: Rectangulo2D, in a: float) {
+    proc rotar(inout r: Rectangulo2D, in a: real) {
         requiere {r == old(r)}
         asegura {
             forall i: int :: (0 <= i < 4) ==>L 
@@ -94,18 +94,18 @@ TAD Esfera3D {
     obs pos: struct<x: R, y: R, z: R>
     obs r: R
 
-    proc crear(in x_, y_, z_, r_: float, out e: Esfera3D) {
+    proc crear(in x_, y_, z_, r_: real, out e: Esfera3D) {
         requiere {True}
         asegura {e.pos == <x: x_, y: y_, z: z_> && e.r == r_}
     } 
 
-    proc trasladar(inout e: Esfera3D, in dx: float, in dy: float, in dz: float) {
+    proc trasladar(inout e: Esfera3D, in dx: real, in dy: real, in dz: real) {
         requiere {e == old(e)}
         asegura {e.pos.x == old(e).pos.x + dx && e.pos.y == old(e).pos.y + dy && e.pos.z == old(e).pos.z + dz}
         asegura {e.r == old(e).r}
     }
 
-    proc rotar(inout e: Esfera3D, a1: float, a2: float) {
+    proc rotar(inout e: Esfera3D, a1: real, a2: real) {
         /* a1 rota sobre el plano XY (alrededor del eje Z), a1 sobre el plano YZ (alrededor del eje X)*/
         requiere {e == old(e)}
         asegura {
@@ -116,7 +116,7 @@ TAD Esfera3D {
         asegura {e.r == old(e).r}
     }
 
-    proc escalar(inout e: Esfera3D, k: float) {
+    proc escalar(inout e: Esfera3D, k: real) {
         requiere {e == old(e) && k > 0}
         asegura {e.r == k*old(e).r}
         asegura {e.pos == old(e).pos}    
@@ -128,7 +128,7 @@ TAD Esfera3D {
         asegura {e.r == old(e).r}
     }
 
-    aux rotacion_XY_y(in x, y, a: float): float = sin(a)*x + cos(a)*y
+    aux rotacion_XY_y(in x, y, a: real): real = sin(a)*x + cos(a)*y
 }
 
 2.a.
@@ -208,10 +208,10 @@ TAD Multidict<K, V> {
 3.a.
 TAD CacheTTL<K, V> {
     obs datos: dict<K, V>
-    obs tiempos_agregado: dict<K, float>
-    obs ttl: float
+    obs tiempos_agregado: dict<K, real>
+    obs ttl: real
 
-    proc crear(in ttl_: float, out c: CacheTTL<K, V>) {
+    proc crear(in ttl_: real, out c: CacheTTL<K, V>) {
         requiere {ttl_ > 0}
         asegura {c.datos == {} && c.ttl == ttl_ && c.tiempos_agregado == {}}
     }
@@ -317,7 +317,7 @@ TAD CacheFIFO<K, V> {
 3.c.
 TAD CacheLRU<K, V> {
     obs datos: dict<K, V>
-    obs accedido: dict<K, float>
+    obs accedido: dict<K, real>
     obs max: int
 
     proc crear(in max_: int, out c: CacheLRU<T>) {
@@ -423,51 +423,51 @@ TAD Diccionario<K, V> {
 
 4.c.
 TAD Punto {
-    obs rho: float
-    obs theta: float
+    obs rho: real
+    obs theta: real
 
-    proc crear(in rho_, theta_: float, out p: Punto) {
+    proc crear(in rho_, theta_: real, out p: Punto) {
         requiere {True}
         asegura {p.rho == rho_ && p.theta == theta_}
     }
 
-    proc coordX(in p: Punto, out res: float) {
+    proc coordX(in p: Punto, out res: real) {
         requiere {True}
         asegura {res == p.rho * cos(p.theta)}
     }
 
-    proc coordY(in p: Punto, out res: float) {
+    proc coordY(in p: Punto, out res: real) {
         requiere {True}
         asegura {res == p.rho * sin(p.theta)}
     }
 
-    proc coordTheta(in p: Punto, out res: float) {
+    proc coordTheta(in p: Punto, out res: real) {
         requiere {True}
         asegura {res == p.theta}
     }
 
-    proc coordRho(in p: Punto, out res: float) {
+    proc coordRho(in p: Punto, out res: real) {
         requiere {True}
         asegura {res == p.rho}
     }
 
-    proc mover(inout p: Punto, in deltaX, deltaY: float) {
+    proc mover(inout p: Punto, in deltaX, deltaY: real) {
         requiere {p == old(p)}
         asegura {p.rho == sqrt((old(p).rho * cos(old(p).theta) + deltaX)**2 + (old(p).rho * sin(old(p).theta) + deltaY)**2)}
         asegura {p.theta == safearctan(old(p).rho * cos(old(p).theta) + deltaX, old(p).rho * sin(old(p).theta) + deltaY)}
     }
 
-    proc escalar(inout p: Punto, in k: float) {
+    proc escalar(inout p: Punto, in k: real) {
         requiere {p == old(p)}
         asegura {p.rho == k*old(p).rho && p.theta == old(p.theta)}
     }
 
-    proc rotar(inout p: Punto, in a: float) {
+    proc rotar(inout p: Punto, in a: real) {
         requiere {p == old(p)}
         asegura {p.rho == old(p).rho && p.theta == old(p.theta) + a}
     }
 
-    aux safearctan(x, y: float): float = if x == 0 then signo(y)*pi/2 else arctan(y/x) fi
+    aux safearctan(x, y: real): real = if x == 0 then signo(y)*pi/2 else arctan(y/x) fi
 }
 
 5.
@@ -727,7 +727,7 @@ TAD BancoClasista {
     }
 
     proc encolar(inout b: BancoClasista, in p: Persona) {
-        requiere {b == old(b) && !(exists p_cola: Persona :: (p_cola in b.cola_bien || p_cola in b.cola_prole) &&L p_cola.dni == p.dni)}
+        requiere {b == old(b) && !(exists p_cola: Persona :: (p_cola in b.cola_bien || p_cola in b.cola_prole) && p_cola.dni == p.dni)}
         asegura {
             (p.tipo == "bien" ==>
                 b.cola_bien == old(b).cola_bien + [p] &&
@@ -850,7 +850,7 @@ TAD EmpresaTaD {
             (old(e).tecnicos_disp > 0 ==>
                 e.tecnicos_disp == old(e).tecnicos_disp - 1 && e.tecnicos_asig == old(e).tecnicos_asig + 1 && e.pendientes == old(e).pendientes) &&
             (old(e).tecnicos_disp == 0 ==>
-                e.tecnicos_disp == 0 && && e.tecnicos_asig == old(e).tecnicos_asig && e.pendientes == old(e).pendientes + [d])
+                e.tecnicos_disp == 0 && e.tecnicos_asig == old(e).tecnicos_asig && e.pendientes == old(e).pendientes + [d])
         }
     }
 
