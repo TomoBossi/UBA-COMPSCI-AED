@@ -213,7 +213,7 @@ proc primoAnterior(in n: N, out p: N) {
     asegura {esPrimo(p) ^ (p < n) ^ ¬(∃m: N)((p < m < n) ^L esPrimo(m))}
 }
 proc primosHermanos(inout l: seq<Z>) {
-    requiere {l = L0 ^ (∀i: Z)((0 <= i < |l|) => (l[i] > 2))}
+    requiere {l = L0 ^ (∀i: Z)((0 <= i < |l|) =>L (l[i] > 2))}
     asegura {(|l| = |L0|) ^ (∀i: Z)((0 <= i < |l|) =>L esPrimoAnterior(L0[i], l[i]))}
     pred esPrimoAnterior(n,p: N) {esPrimo(p) ^ (p < n) ^ ¬(∃m: N)((p < m < n) ^L esPrimo(m))}
 }
@@ -227,7 +227,7 @@ proc limpiarDuplicados(inout l: seq<Char>, out dup: seq<Char>) {
     requiere {l = L0}
     asegura {(|l| <= |L0|) ^L (esSubseqOrdenada(l, L0) ^ noFaltaNiSobraNinguno(l, L0) ^ sinRepetidos(l) ^ sonDuplicados(L0, dup))}
     pred sonDuplicados(in s,d: seq<Char>) {
-        |d| < |s| ^
+        |d| <= |s| ^
         (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) > 1)) =>L (#apariciones(d, s[i]) = #apariciones(s, s[i]) - 1)) ^
         (∀i: Z)(((0 <= i < |s|) ^L (#apariciones(s, s[i]) <= 1)) =>L (#apariciones(d, s[i]) = 0))
     }
