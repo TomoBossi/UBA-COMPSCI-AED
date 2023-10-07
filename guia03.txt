@@ -210,7 +210,7 @@ El teorema dice que un ciclo termina y es correcto respecto de su especificació
 5. (I ^ fv <= 0) => ¬B (el ciclo termina cuando la función variante se hace no positiva)
 Donde B es la condición del ciclo, S el programa ejecutado dentro del ciclo, y P_c, Q_c son la pre y postcondición del ciclo, respectivamente.
 Obs.: El teorema requiere de la aplicación del teorema del invariante (1-3) y el teorema de terminación de ciclo (4-5). El teorema de terminación nos asegura que el ciclo termina, condición necesaria para que valga el teorema del invariante, que asegura la correctitud del ciclo, es decir la validez de la tripla de Hoare {P_c} while B do S endwhile {Q_c}.
-Obs.: No hay método mecánico para derivar el invariante, I, ni la función variante, fv. Si el ciclo es parte intermedia de un programa más grande (como casi siempre lo és) tampoco hay método mecánico para definir cuál es su precondición, P_c.
+Obs.: No hay método mecánico para derivar el invariante, I, ni la función variante, fv. Si el ciclo es parte intermedia de un programa más grande (como casi siempre lo és) tampoco hay método mecánico para definir cuál es su precondición y postcondición, P_c y Q_c.
 Obs.: No nos permite encontrar la wp del ciclo, sólo demostrar que la P_c propuesta o dada implica la wp del ciclo (demostrando por lo tanto la validez de la tripla).
 ###
 
