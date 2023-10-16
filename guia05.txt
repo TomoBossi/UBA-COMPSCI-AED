@@ -1,0 +1,322 @@
+1.
+Modulo DictAcotadoImpl<K, V> implementa DictAcotado<K, V> {
+	var elems: Array<tupla<K,V>>
+	var largo: int
+	
+	...
+	
+	FuncAbs(in d': DictAcotadoImpl<K, V>, out d: DictAcotado<K, V>) {
+		d: DictAcotado<K, V> |
+		(d'.elems.length() == d.cap) ^ 
+		(d'.largo == |d.data|) ^
+		(forall k: K, v: V :: <k, v> in d'.elems[0..d'.largo] <=> (k in d.data ^L d[k] == v)) /* asumo que puedo usar esta sintaxis para slices */
+	}
+	
+	InvRep(d': DictAcotadoImpl<K, V>) {
+		(0 <= d'.largo <= d'.elems.length()) ^
+		(forall k: K, v: V :: #apariciones(d'.elems[0..d'.largo], <k, v>) <= 1) ^
+		(forall k: K, v: V :: <k, v> in d'.elems[0..d'.largo] =>L ¬(exists v': V :: v != v' ^ <k, v'> in d'.elems[0..d'.largo]))
+	}
+}
+
+2.
+Modulo ConjAcotadoImpl<T> implementa ConjAcotado<T> {
+	var elems: Array<T>
+	var enUso: Array<bool>
+
+	...
+	
+	proc definir(inout c': ConjAcotadoImpl<T>, in e: T) { /* asumo que es la implementación de agregar */
+		requiere {c' == old(c')}
+		requiere {¬(exists i: int :: 0 <= i < c'.elems.length() ^L (c'.elems[i] == e ^ c'.enUso[i] == true))}
+		requiere {cuantosEnUso(c'.enUso) < c'.enUso.length()}
+		asegura {exists i: int :: 0 <= i < c'.elems.length() ^L 
+			((c'.elems[i] == e ^ c'.enUso[i] == true ^ old(c').enUso[i] == false) ^ 
+			(forall j: int :: (0 <= j < c'.elems.length() ^ j != i) =>L old(c').elems[i] == c'.elems[i] ^ old(c').enUso[i] == c'.enUso[i]))
+        }
+		complejidad {O(n)}
+		
+        var n: int;
+        var i: int;
+		n := c'.elems.length();
+		i := 0;
+		while (i < n && c'.enUso[i] == false) do
+			i := i + 1;
+		endwhile;
+		c'.elems[i] := e;
+		c'.enUso[i] := true;
+	}
+	
+	proc obtener(in c': ConjAcotadoImpl<T>, out res: tuple<Array<T>, Array<bool>) { /* asumo que simplemente devuelve una vista de las vars, no hay nada analogable a "obtener" en el TAD */
+	    requiere {True}
+        asegura {res == <c'.elems, c'.enUso>}
+        complejidad {O(1)}
+        
+        var res := tuple<Array<T>, Array<bool>>
+        res :=  new tupla<Array<T>, Array<bool>>(new Array<T>(c'.elems.length()), new Array<bool>(c'.elems.length()));
+        res[0] := c'.elems; 
+        res[1] := c'.enUso>;
+        return res;
+    }
+
+	FuncAbs(in c': ConjAcotadoImpl<T>, out c: ConjAcotado<T>) {
+		c: ConjAcotado<T> |
+		(forall i: int :: (0 <= i < c'.elems.length()) =>L (c'.enUso[i] == true) <=> (c'.elems[i] in c.elems)) ^
+		(c.cap == cuantosEnUso(c'.enUso))
+	}
+	
+	InvRep(c': ConjAcotadoImpl<T>) {
+		(c'.elems.length() == c'.enUso.length()) ^
+		¬(exists i, j: int :: (0 <= i, j < c'.elems.length() ^ i != j) ^L (c'.elems[i] == c'.elems[j] ^ c'.enUso[i] == true ^ c'.enUso[j] == true))
+	}
+	
+	aux cuantosEnUso(a: Array<bool>): int = sum i: int :: 0 <= i < a.length() :: if a[i] == true then 1 else 0 fi
+}
+
+3.a, b.
+modulo ColaAcotadaImpl<T> implementa ColaAcotada<T> {
+    var inicio: int
+    var fin: int
+    var elems: array<T>
+
+    proc colaVacía(in c: int, out c': ColaAcotadaImpl<T>) {
+        asegura {c'.inicio == 0 ^ c'.fin == 0 ^ c'.elems == new Array<T>(c+2)} /* Duda: ¿Vale usar new Array<T>(c) en el asegura? */
+        complejidad {O(1)} /* asumo que los pedidos de memoria al SO son de complejidad O(1) */
+
+        var c': ColaAcotadaImpl<T>;
+        c' := new ColaAcotadaImpl<T>();
+        c'.inicio := 0;
+        c'.fin := 0;
+        c'.elems := new Array<T>(c+2);
+        return c';
+    }
+
+    proc vacia(in c': ColaAcotadaImpl<T>, out res: bool) {
+        requiere {True}
+        asegura {res == True <=> c'.inicio == c'.fin}
+        complejidad {O(1)}
+
+        var res: bool;
+        res := c'.inicio == c'.fin;
+        return res;
+    }
+
+    proc encolar(inout c': ColaAcotadaImpl<T>, in e: T) {
+        requiere {c' == old(c') ^ (n(c') > 2 ^L (c'.inicio != (c'.fin + 2)%n(c')))}
+        asegura {c'.inicio == old(c').inicio ^ c'.fin == old(c').fin + 1}
+        asegura {forall i: Z :: 0 <= i < c'.elems.length() =>L
+            ((i == old(c').fin => c'.elems[i] == e) ^ (i != old(c').fin => c'.elems[i] == old(c').elems[i]))
+        }
+        complejidad {O(1)}
+
+        c'.elems[c'.fin] := e;
+        c'.fin := (c'.fin + 1)%c'.elems.length();
+    }
+
+    proc desencolar(inout c': ColaAcotadaImpl<T>) {
+        requiere {c' == old(c') ^ (n(c') > 0 ^L c'.inicio != c'.fin)}
+        asegura {c'.inicio == old(c').inicio + 1 ^ c'.fin == old(c').fin}
+        asegura {c'.elems == old(c').elems}
+        complejidad {O(1)}
+
+        c'.inicio := (c'.inicio + 1)%c'.elems.length();
+    }
+
+    FuncAbs(in c': ColaAcotadaImpl<T>, out c: ColaAcotada<T>) {
+		c: ColaAcotada<T> |
+		(c.cap == n(c') - 2) ^
+        (c.s == if c'.inicio <= c'.fin then c'.elems[c'.inicio..c'.fin] else c'.elems[c'.inicio..n(c')] + c'.elems[0..c'.fin] fi)
+	}
+	
+	InvRep(c': ColaAcotadaImpl<T>) {
+		(c'.fin + 1)%n(c') != c'.inicio
+	}
+
+    aux n(in c': ColaAcotadaImpl<T>): int = c'.elems.length()
+}
+3.c. No tiene sentido usar un buffer circular para una pila acotada porque en un momento dado cualquiera sólo puede modificarse uno de sus extremos.
+
+4.a, b.
+modulo PlantaImpl implementa Planta {
+    var alarmas: Diccionario<Alarma, Conjunto<Sensor>>
+    var sensores: Diccionario<Sensor, Conjunto<Alarma>>
+
+    ...
+
+    FuncAbs(in p': PlantaImpl<T>, out p: Planta) {
+		p: Planta |
+        (forall a: Alarma :: a in p'.alarmas.data <=> a in p.alarmas) ^
+        (forall s: Sensor, a: Alarma :: (s in p'.sensores.data ^L a in p'.sensores.data[s]) <=> <s, a> in p.sensores)
+	}
+	
+    /* Tiene que haber una correspondencia entre ambas vars de forma tal que toda alarma, para cada uno de sus sensores asociados en la variable alarmas, sea elemento de los conjuntos correspondientes en la variable sensores, y viceversa */
+	InvRep(p': PlantaImpl) {
+        (forall a: Alarma :: a in p'.alarmas.data =>L
+            forall s: Sensor :: s in p'.alarmas.data[a] =>L
+                s in p'.sensores.data ^L a in p'.sensores.data[s]) ^
+        (forall s: Sensor :: s in p'.sensores.data =>L
+            forall a: Alarma :: a in p'.sensores.data[s] =>L
+                a in p'.alarmas.data ^L s in p'.alarmas.data[a])
+	}
+}
+
+5.
+Actividad es string
+Proyecto es string
+modulo PlanillaImpl implementa Planilla {
+    var detalle: Diccionario<Actividad, struct<proy: Proyecto, mes: int, horas: int>>
+    var horasPorMes: Diccionario<Proyecto, Array<int>>
+
+    ...
+
+    FuncAbs(in p': PlanillaImpl, out p: Planilla) {
+		p: Planilla |
+        (forall a: Actividad :: a in p'.detalle.data <=> a in p.actividades) ^
+        (forall a: Actividad, pr: Proyecto :: a in p'.detalle.data ^L p'.detalle.data[a].proy == pr <=> a in p.proyectoDe ^L p.proyectoDe[a] == pr) ^
+        (forall a: Actividad, m: int :: a in p'.detalle.data ^L p'.detalle.data[a].mes == m <=> a in p.mesDe ^L p.mesDe[a] == m) ^
+        (forall a: Actividad, h: int :: a in p'.detalle.data ^L p'.detalle.data[a].horas == h <=> a in p.horaDe ^L p.horaDe[a] == h)
+	}
+
+    /* Todas las horas tienen que estar entre 0 y 23, todos los meses entre 0 y 11, todos los proyectos tienen que ser clave del dict de horasPorMes, y la sumatoria de horas totales para un dado mes y proyecto tiene que igualar p'.horasPorMes.data[proyecto][mes] */
+	InvRep(p': PlanillaImpl) {
+        forall a: Actividad, pr: Proyecto, m: int, h: int :: (a in p'.detalle.data ^L p'.detalle.data[a] == <proy: pr, mes: m, horas: h>) =>L
+            ((0 <= m < 12) ^ (0 <= h < 24) ^ (pr in p'.horasPorMes.data ^L p'.horasPorMes.data[pr].length() == 12 ^L
+                forall m': int :: 0 <= m' < 12 =>L p'.horasPorMes.data[pr][m'] == sum a: Actividad :: a in p'.detalle.data ^L (p'.detalle.data[a].proy == pr ^ p'.detalle.data[a].mes == m') :: p'.detalle.data[a][horas]))
+	}
+}
+
+6.
+Persona es string
+Grupo es string
+Regalo es string
+modulo AltaFiestaImpl implementa AltaFiesta {
+    var invitados: Conjunto<Persona>
+    var presentes: Conjunto<Persona>
+    var grupoDe: Diccionario<Grupo, Conjunto<Persona>>
+    var regaloDeGrupo: Diccionario<Grupo, Regalo>
+
+    ...
+
+    proc lleganInvitados(inout a': AltaFiestaImpl, in c: Conjunto<Persona>, in g: Grupo, in r: Regalo) {
+        requiere {...}
+        asegura {...}
+        complejidad {...}
+
+        /* hago abuso de pseudocódigo porque no tengo ni la más pálida idea de cómo prentenden que hagamos esto cuando no tenemos implementaciones concretas para Conjunto o Diccionario */
+        a'.presentes := a'.presentes + c; /* rompe 3 */
+        a'.grupoDe[g] := c;               /* rompe 2, reestablece 3 */
+        a'.regaloDeGrupo[g] := r;         /* reestablece 2 */
+    }
+
+    FuncAbs(in a': AltaFiestaImpl, out a: AltaFiesta) {
+		a: AltaFiesta |
+        (a.invitados == a'.invitados.data) ^
+        (a.pendientes == a'.invitados.data - a'.presentes.data) ^
+        (forall p: Persona, g: Grupo :: (p in a.grupoDe ^L a.grupoDe[p] == g) <=> (g in a'.grupoDe.data ^L p in a'.grupoDe.data[g])) ^
+        (forall p: Persona, r: Regalo, g: Grupo :: ((p in a.regaloDe ^L a.regaloDe[p] == r) ^ (p in a.grupoDe ^L a.grupoDe[p] == g)) <=> (g in a'.regaloDeGrupo.data ^L a'.regaloDeGrupo.data[g] == r))
+	}
+
+    /* Todos los presentes pertenecen a los invitados, todos los grupos tienen un regalo y un conjunto de personas asociado, cada uno de los presentes pertenece a un único grupo */
+	InvRep(a': AltaFiestaImpl) {
+        (forall p: Persona :: p in c'.presentes =>L p in c'.invitados) ^                         /* 1 */
+        (forall g: Grupo :: g in c'.grupoDe.data <=> g in c'.regaloDeGrupo.data) ^               /* 2 */
+        (forall p: Persona :: p in c'.presentes =>L
+            (exists g: Grupo :: g in c'.grupoDe.data ^L p in c'.grupoDe.data[g]) ^ 
+            ¬(exists g': Grupo :: (g != g' ^ g' in c'.grupoDe.data) ^L p in c'.grupoDe.data[g']) /* 3 */
+        )
+	}
+}
+
+7.
+modulo OficinaImpl implementa Oficina {
+    var catPrioritarias: Conjunto<Categoria>
+    var tramites: Diccionario<Id, Categoria>
+    var tramCat: Diccionario<Categoria, Conjunto<Id>>
+    var pendPrioritarios: Conjunto<Id>
+    var pendientes: Conjunto<Id>
+
+    ...
+
+    /* obs.: creo que o'.pendPrioritarios no aporta nada de información necesaria para recontruir la instancia abstracta */
+    FuncAbs(in o': OficinaImpl, out o: Oficina) {
+        o: Oficina |
+        (o.catsPrioritarias == o'.catPrioritarias.elems) ^
+        (forall c: Categoria :: c in o.categorias <=> c in o'.tramCat.data) ^
+        (forall i: Id :: i in o.tramitesPend <=> i in o'.pendientes.elems) ^
+        (forall i: Id, c: Categoria :: (i in o.categoriaDe ^L o.categoriaDe[i] == c) <=> (c in o'.tramCat.data ^L i in o'.tramCat.data[c]))
+    }
+
+    /* Los pendientes prioritarios son subconjunto de los pendientes */
+    /* Los pendientes son las claves de los tramites */
+    /* Las categorias prioritarias son subconjunto de las categorias (claves de tramCat) */
+    /* Todos los tramites de id tal que su categoria pertenece a catPrioritarias forman parte de pendPrioritarios */
+    /* Los tramites de una misma categoría forman el conjunto asociado a la categoría en tramCat */
+    InvRep(o': OficinaImpl) {
+        (forall i: Id :: i in o'.pendPrioritarios.elems => i in o'.pendientes.elems) ^
+        (forall i: Id :: i in o'.pendientes.elems <=> i in o'.tramites.data) ^
+        (forall c: Categoria :: c in o'.catPrioritarias.elems => c in o'.tramCat.data) ^
+        (forall i: Id, c: Categoria :: ((i in o'.tramites.data ^L o'.tramites.data[i] == c) ^ c in o'.catPrioritarias.elems) => i in o'.pendPrioritarios.elems) ^
+        (forall ci: conj<Id>, c: Categoria :: (c in o'.tramCat.data ^L o'.tramCat.data[c] == ci) => (forall i: Id :: (i in ci) => (i in o'.tramites.data ^L o'.tramites.data[i] == c)))
+    }
+}
+
+8.
+Estudiante es int
+modulo SecundarioImpl implementa Secundario {
+    var estudiantes: Conjunto<Estudiante>
+    var faltas: Diccionario<Estudiante, int>
+    var notas: Array<Conjunto<Estudiante>>
+    var notasPorEstudiante: Diccionario<Estudiante, Array<int>>
+
+    ...
+
+    /* obs.: creo que s'.notas no aporta nada de información necesaria para recontruir la instancia abstracta */
+    FuncAbs(in s': SecundarioImpl, out s: Secundario) {
+        s: Secundario |
+        (s.estudiantes == s'.estudiantes.elems) ^
+        (s.faltas == s'.faltas.data) ^
+        (forall i: int, e: Estudiante :: 0 <= i <= 10 ^ e in s'.notasPorEstudiante.data =>L 
+            (e in s.notas ^L s'.notasPorEstudiante.data[e][i] == #apariciones(s.notas[e], i)) /* me surge el instinto de poner una condición sobre s.notas[e] (de manera que no puedan haber elementos distintos a los enteros entre 0 y 10 ) pero estoy muy seguro de que no corresponde - las instancias válidas del TAD quedan determinadas por la especificación del TAD en sí, no debería ser necesario de ninguna manera restringirlas o imponerles condiciones en la FuncAbs de una implementación cualquiera */
+        )
+    }
+
+    /* Notas tiene 11 elementos */
+    /* cada array de notasPorEstudiante tiene 11 elementos con cada posición >= 0 */
+    /* Un estudiante está en el conjunto de posición i de notas si solo si el estudiante está en notasPorEstudiante y notasPorEstudiante[e][i] > 0 */
+    /* Todas las claves de faltas y notasPorEstudiante y todos los elems de todos los conjuntos de notas están en estudiantes */
+    /* Las faltas por estudiante son >= 0 */
+    InvRep(s': SecundarioImpl) {
+        (s'.notas.length() == 11) ^L
+        (forall e: Estudiante :: e in s'.notasPorEstudiante.data =>L (s'.notasPorEstudiante.data[e].length == 11 ^ (forall j: int :: j in s'.notasPorEstudiante.data[e] => j >= 0))) ^L
+        (forall e: Estudiante, i: int :: (0 <= i <= 10 ^L e in s'.notas[i].elems) <=> (e in s'.notasPorEstudiante.data ^L s'.notasPorEstudiante.data[e][i] > 0)) ^
+        (forall e: Estudiante :: (e in s'.faltas.data v e in s'.notasPorEstudiante.data v (exists i: Z :: 0 <= i <= 10 ^L e in s'.notas[i].elems)) => e in s'.estudiantes.elems) ^
+        (forall e: Estudiante :: e in s'.faltas.data =>L s'.faltas.data[e] >= 0)
+    }
+}
+
+9.
+modulo FilaImpl implementa Fila {
+    var entraron: Conjunto<Persona>
+    var fila: Cola<Persona>
+    var colados: Conjunto<Persona>
+    var atendidos: Conjunto<Persona>
+
+    ...
+
+    FuncAbs(in f': FilaImpl, out f: Fila) {
+        f: Fila |
+        (f.fila == f'.fila.s) ^
+        (f.atendidos == f'.atendidos.elems) ^
+        (f.colados == f'.colados.elems) ^
+        (forall p: Persona :: p in f.retirados <=> (p in f'.entraron.elems ^ ¬(p in f'.fila.s) ^ ¬(p in f'.atendidos.elems)))
+    }
+
+    /* Entraron es la union de fila y atendidos */
+    /* Colados es subconjunto de fila */
+    /* No hay personas repetidas en la cola */
+    InvRep(f': FilaImpl) {
+        (forall p: Persona :: p in f'.entraron.elems <=> (p in f'.fila.s v p in f'.atendidos.elems)) ^
+        (forall p: Persona :: p in f'.colados.elems => p in f'.fila.s) ^
+        (forall p: Persona :: p in f'.fila.s <=> #apariciones(f'.fila.s, p) == 1)
+    }
+}

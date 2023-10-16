@@ -1,0 +1,152 @@
+1, 2.a. /* mismo ejercicio... */
+QVQ existen n0, k in N>0 t.q. para todo n >= n0 se cumpla (n**2 - 4n - 2) <= k*n**2 (<=>) ((1 - k)*n**2 - 4n - 2) <= 0
+Tomando k = n0 = 1,
+-4n - 2 <= 0 (<=>) -2n <= 1, que es trivialmente verdadero para todo n >= n0 = 1.
+
+1, 2.b.
+QVQ existen n0, c in N>0 t.q. para todo n >= n0 se cumpla n**k <= c*n**(k+1) (<=>) 1 <= c*n
+Tomando c = n0 = 1 lo anterior es trivialmente verdadero para todo n >= n0 = 1.
+Por transitividad, como f in O(g) (dato) y g in O(h) (recién demostrado), => f in O(h) como se quería demostrar.
+Dem.:
+Si f in O(g) entonces vale f(n>=n01) <= k1*g(n>=n01) (<=>) f(n>=n01)/k1 <= g(n)
+Si g in O(h) entonces vale g(n>=n02) <= k2*h(n>=n02), con lo cual eligiendo n0 como max{n01, n02} y a k como k2 vale también que f(n>=n0) <= k*h(n>=n0), como se quería demostrar. 
+
+1, 2.c.
+QVQ existen n0, k in N>0 t.q. para todo n >= n0 se cumpla log_b(n) <= k*n
+Si la base b es t.q. 0 < b < 1, el logaritmo es decreciente y log_b(1) = 0, con lo cual es trivial encontrar n0 y k tal que se cumpla la desigualdad (ej. n0 = 1, k = 1).
+Si la base b es t.q. b > 1, el logaritmo es creciente y log_b(1) = 0 con pendiente (derivada primera) c decreciente (derivada segunda negativa para todo su dominio), con lo cual es trivial encontrar n0 y k tal que se cumpla la desigualdad (ej. n0 = 1, k = c).
+Alternativamente, por límite: 
+lim n -> +inf :: log(n)/n = (l'hop) 1/n -> 0 => log(n) in O(n)
+Por transitividad, como f in O(g) (dato) y g in O(h) (recién demostrado), => f in O(h) como se quería demostrar.
+
+3.a.
+Falso.
+Por límite: 
+lim n -> +inf :: 2**n/1 -> +inf => !(2**n in O(1))
+
+3.b.
+Verdadero.
+Por límite: 
+lim n -> +inf :: n/n! -> 0 => n in O(n!)
+
+3.c.
+Falso.
+Por límite: 
+lim n -> +inf :: n!/(n**n) = (lim n -> +inf :: 1) * (lim n -> +inf :: (n-1)/n) * ... * (lim n -> +inf :: 1/n)
+Como lim n -> + inf :: (n-k)/n = (l'hop) 1 -> 1 y lim n -> + inf :: 1/n -> 0, todo el límite tiende a 0 y => n! in O(n**n)
+
+3.d.
+Verdadero.
+Por límite: 
+lim n -> +inf :: 2**n/n! = (lim n -> +inf :: 2/n) * (lim n -> +inf :: 2/(n-1)) * ... * (lim n -> +inf :: 2)
+Todo el límite tiende a 0 y => 2**n in O(n!)
+
+3.e.
+Verdadero.
+Por definición:
+QVQ existen n0, k in N>0 t.q. para todo n >= n0 se cumpla i*n <= k*j*n, lo cual es trivialmente cierto considerando que i, j in N. Basta elegir k t.q. k*j >= i y tomar cualquier n0.
+
+3.f.
+Verdadero.
+Por definición:
+QVQ existen n0, c in N>0 t.q. para todo n >= n0 se cumpla 2**k <= c*1. Basta elegir c >= 2**k.
+
+3.g.
+Verdadero.
+Probado por definición en 1, 2.c.
+
+3.h.
+Falso.
+Probado por el límite en 3.d.
+
+3.i.
+Verdadero.
+Por límite:
+lim n -> +inf :: n**2*2**n/3**n = lim n -> +inf :: n**2/(3*2)**n = (l'hop x2) lim n -> +inf :: 2/(3/2)**n * (1/ln(3/2))**2 -> 0 => n**2*2**n in O(3**n)
+
+3.j.
+Verdadero.
+Por definición:
+QVQ existen n0, k in N>0 t.q. para todo n >= n0 se cumpla f(n) <= k*f(n), lo cual es trivialmente cierto para cualquier par de n0 y k.
+
+4.a.
+Significa que existe algún múltiplo de g(n) que crece más rápido que cualquier múltiplo de f(n) a partir de cierto n.
+Si se cumple O(f) ⊆ O(g) y O(g) ⊆ O(f) entonces f y g pertenecen a la misma familia de funciones y tienen un crecimiento cualitativa y semicuantitativamente equivalente.
+
+4.b.
+Puede que el enunciado se refiera a ordenar 3 grupos distintos y no a todos en simultáneo. No es del todo claro. Es muy probable que mi resolución sea parcialmente incorrecta, no probé nada formalmente. Me ayudé con Desmos para ver el grado de crecimiento de las funciones.
+O(1/x) ⊆ O(1) == O(sqrt(2)) == O(1 + sin**2(x)) ⊆ O(log(log(x)) ⊆ O(log(x)) ⊆ O(log(x**2)) ⊆ O(log**2(x)) ⊆ O(sqrt(x)) ⊆ O(log(x!)) ⊆ O(x*log(x)) ⊆ O(x + 1) ⊆ O(x**2) ⊆ O(x!) ⊆ O(x**x)
+
+5.a.
+O(1) + O(1) + n*O(1) = O(n)
+
+5.b.
+O(1) + O(1) + n*n*O(1) = O(n**2)
+
+5.c.
+O(1) + O(1) + p*r*(O(1) + q*(O(1)) + O(1)) = O(p*r*q)
+
+6.a.
+La función ordena de menor a mayor. Peor caso: arreglo ordenado de mayor a menor.
+O(1) + sum :: i = 0, i < n :: (O(1) + O(1) + sum :: j = 0, j < i :: (O(1) + O(1)) + O(1)) = sum :: i = 0, i < n :: i = (gauss) O(x**2)
+
+6.b.
+La cantidad de iteraciones k es t.q. 2**k = (aprox.) n => k = (aprox.) log_2(n) => O(log(n))
+
+6.c.
+O(1) + O(1) + sum :: i = 0, i < n :: (O(1) + O(1) + O(1) + sum :: j = 0, n - i :: (O(1) + log(n)*(O(1) + O(1)) + O(1)) + O(1)) =
+sum :: i = 0, i < n :: (sum :: j = 0, n - i :: O(log(n))) = sum :: i = 0, i < n :: (sum :: j = 0, i :: O(log(n))) = sum :: i = 0, i < n :: i*O(log(n)) =
+(gauss) O(n**2*log(n))
+
+7.a.
+inicializar res y variable para iteración
+iterar
+    sumar
+dividir por el tamaño
+devolver
+
+O(n). Complejidad óptima. No hay escapatoria de la realidad de que se necesita el conocimiento de toda la secuencia para poder calcular su media.
+
+7.b.
+ordenar la secuencia
+tomar el valor en el centro
+devolver
+
+O(n*log(n)) si para ordenar se usa merge sort. Complejidad óptima para fines prácticos por el uso de un algoritmo de ordenamiento que, hasta donde sé, es el (o uno de los) de mejor complejidad de peor caso.
+No hay escapatoria de la realidad de que se necesita el conocimiento de toda la secuencia y del orden de sus elementos para calcular su mediana.
+Aclaro "para fines prácticos" porque no me es tan obvio que sea imposible algo mejor, a diferencia del caso de la media.
+
+7.c.
+inicializar res y variable para iteración
+iterar
+    chequear el candidato a primo es divisible
+devolver
+
+O(n). No óptimo. Sé que existen algoritmos mucho más sofisticados y de mejor complejidad de peor caso para la búsqueda de primos, pero no quería gastarme en pensarlos o buscarlos y pasarlos a pseudocódigo.
+
+8.a.
+Falso. A la intersección pertenecen las funciones de la forma f(n) = n, y !(n in Θ(n**2)).
+
+8.b.
+Verdadero. A la intersección pertenecen, entre otras familias de funciones, tanto las de la forma f(n) = n como las de la forma g(n) = n*log(n).
+
+8.c.
+Falso. Siempre puede tomarse, por ejemplo, g(n) = n*f(n). Así, vale que !(g in O(f)) y f in O(g).
+Esto puede demostrarse viendo que no existen k, n0 in N>0 t.q. n*f(n) <= k*f(n) para todo n >= n0. Toda constante k pierde, eventualmente, contra n. También puede demostrarse fácilmente por límites.
+
+8.d.
+No me queda del todo claro si el "o" es excluyente o no.
+Si es excluyente, falso. El contraejemplo es cualquier par de funciones de la misma familia, ej. f(n) = n y g(n) = 2*n.
+Si no es excluyente, que creo es el caso, verdadero. Esto deriva del caracter de relación de orden del operador <= que forma parte de la definición de pertenencia de f a O(g).
+Cualquier par O(f), O(g) es comparable y necesariamente vale O(f) in O(g) y/o O(g) in O(f)
+
+9.a.
+Verdadero. 
+
+
+
+
+
+
+
+
