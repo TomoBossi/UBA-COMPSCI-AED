@@ -256,7 +256,7 @@ modulo OficinaImpl implementa Oficina {
         (forall i: Id :: i in o'.pendientes.elems <=> i in o'.tramites.data) ^
         (forall c: Categoria :: c in o'.catPrioritarias.elems => c in o'.tramCat.data) ^
         (forall i: Id, c: Categoria :: ((i in o'.tramites.data ^L o'.tramites.data[i] == c) ^ c in o'.catPrioritarias.elems) => i in o'.pendPrioritarios.elems) ^
-        (forall ci: conj<Id>, c: Categoria :: (c in o'.tramCat.data ^L o'.tramCat.data[c] == ci) => (forall i: Id :: (i in ci) => (i in o'.tramites.data ^L o'.tramites.data[i] == c)))
+        (forall ci: Conjunto<Id>, c: Categoria :: (c in o'.tramCat.data ^L o'.tramCat.data[c] == ci) => (forall i: Id :: (i in ci) => (i in o'.tramites.data ^L o'.tramites.data[i] == c)))
     }
 }
 
