@@ -80,7 +80,7 @@ modulo ColaAcotadaImpl<T> implementa ColaAcotada<T> {
     var elems: array<T>
 
     proc colaVacía(in c: int, out c': ColaAcotadaImpl<T>) {
-        asegura {c'.inicio == 0 ^ c'.fin == 0 ^ c'.elems == new Array<T>(c+2)} /* Duda: ¿Vale usar new Array<T>(c) en el asegura? */
+        asegura {c'.inicio == 0 ^ c'.fin == 0 ^ c'.elems.length == c + 2} /* obs.: no vale usar new Array<T>(c) en el asegura, basta darle una longitud */
         complejidad {O(1)} /* asumo que los pedidos de memoria al SO son de complejidad O(1) */
 
         var c': ColaAcotadaImpl<T>;
