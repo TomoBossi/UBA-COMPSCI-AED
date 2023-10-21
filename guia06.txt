@@ -141,12 +141,65 @@ Si no es excluyente, que creo es el caso, verdadero. Esto deriva del caracter de
 Cualquier par O(f), O(g) es comparable y necesariamente vale O(f) in O(g) y/o O(g) in O(f)
 
 9.a.
-Verdadero. 
+Verdadero.
+QVQ existen n0, m0, k in N>0 t.q. para todo n >= n0, m >= m0 se cumpla m + n <= k*n*m.
+Se ve trivialmente que esto se cumple para todo k con n0 = m0 = 2.
+Alternativamente, también puede demostrarse por límite:
+lim n, m -> +inf :: (n + m)/(n*m) = lim n, m -> +inf :: 1/m + 1/n = 0
 
+9.b.
+Falso.
+QVQ existen n0, m0, k in N>0 t.q. para todo n >= n0, m >= m0 se cumpla n**2 + m**2 <= k*n*m.
+Para que se cumpla la desigualdad, k debe superar el ratio entre el más grande y más chico entre n y m.
+Por ejemplo, si n = 10 y m = 30, n**2 + m**2 = 1000 y n*m = 300, por lo que k debe ser >= 4.
+Como para todo n0 y m0 se puede elegir un par n, m tal que el ratio entre ellos sea arbitrariamente alto,
+no existe k tal que se satisfaga la desigualdad para todo n >= n0, m >= m0.
+Entonces vale !(n**2 + m**2 in O(n*m))
 
+9.c.
+Falso.
+QVQ existen n0, m0, k in N>0 t.q. para todo n >= n0, m >= m0 se cumpla n + m**5 <= k*m**5.
+(<=>) n <= (k-1)*m**5
+Para cualquier valor de m >= m0 y cualquier k fijo, se puede tomar un n >= n0 tal que no se cumpla la desigualdad.
 
+9.d.
+Falso.
+QVQ existen n0, m0, k in N>0 t.q. para todo n >= n0, m >= m0 se cumpla n*log(n) + m*log(m) <= k*(n*log(m) + m*log(n))
+(<=>) n/k*log(n) + m/k*log(m) <= n*log(m) + m*log(n)
+Para todo k pueden tomarse n, m tan grandes y tan distintos entre sí tal que 
+la división no compense al hecho de multiplicar al logaritmo más chico por la variable de valor más grande.
+No pude encontrar una prueba "formal", y mi argumento podría estar mal. /* Duda: Huele a que estas cosas son del mismo orden */
 
+9.e.
+Falso.
+Demostrado por el límite expuesto en 9,a,
 
+9.f.
+Verdadero.
+Demostrado por lo visto en 9.b.
 
+9.g.
+Verdadero.
+Demostrado por lo visto en 9.c.
 
+9.h.
+Verdadero.
+Demostrado por lo visto en 9.d. /* Duda */
 
+10.a.
+Por definición de límite, para todo eps > 0 existe n0 tal que para todo n > n0 vale que |f(n)/g(n) - l| < eps
+(<=>) -eps < f(n)/g(n) - 1 < eps (<=>) 1-eps < f(n)/g(n) < 1+eps 
+(<=>) g(n)*k1 < f(n) < g(n)*k2 (con k1 = 1-eps, k2 = 1+eps)
+Que implica el cumplimiento simultaneo por definición de f(n) in O(g(n)) y de g(n) in O(f(n)),
+lo que a su vez implica f(n) in Θ(g) como se quería demostrar.
+
+10.b.
+Por definición de límite, para todo M > 0 existe n0 tal que para todo n > n0 vale que f(n)/g(n) > M
+(<=>) f(n) > k*g(n) (con k = M)
+Que implica el cumplimiento por definición de f(n) in Ω(g(n)) y !(f(n) in O(g(n))),
+como se quería demostrar.
+
+10.c.
+Idem 10.b., tomando como límite tendiendo a infinito a a_n**(-1) = g(n)/f(n).
+Se llega a la conclusión de que f(n) in O(g(n)) y !(f(n) in Ω(g(n))),
+como se quería demostrar.
