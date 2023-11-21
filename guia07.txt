@@ -1,0 +1,642 @@
+1.
+Para responder asumo que sólo tengo la estructura nombrada en su forma más básica, sin variables adicionales.
+Buscar (pertenencia):
+    - Lista enlazada desordenada O(n) (por necesidad de búsqueda del elemento)
+    - Lista enlazada ordenada O(n) (idem desordenada, no se puede hace búsqueda binaria sobre lista enlazada, no se aprovecha el ordenamiento)
+    - ABB O(n) (por necesidad de búsqueda en caso de máximo desbalanceo)
+    - AVL O(log(n)) (porque la búsqueda en general es O(log(n)))
+    - heap binario O(n)
+    - trie O(|k|)
+Buscar mínimo:
+    - Lista enlazada desordenada O(n) (la búsqueda del mínimo requiere "mirar" toda la lista)
+    - Lista enlazada ordenada O(1) (si ordenada de menor a mayor, o en cualquier caso si doblemente enlazada)
+    - ABB O(n) (por necesidad de búsqueda en caso de máximo desbalanceo)
+    - AVL O(log(n)) (por necesidad de iterar sobre los nodos hacia el extremo izquierdo)
+    - heap binario O(1) (asumiendo min heap, O(n) si max heap)
+    - trie O(|a|**cantidad de digitos del minimo) /* DUDA */
+Borrar mínimo:
+    - Lista enlazada desordenada O(n) (por necesidad de búsqueda del mínimo)
+    - Lista enlazada ordenada O(1) (si ordenada de menor a mayor, o en cualquier caso si doblemente enlazada)
+    - ABB O(n) (por necesidad de búsqueda en caso de máximo desbalanceo, luego el borrado en sí es O(1))
+    - AVL O(log(n)) (por necesidad de iterar sobre los nodos hacia el extremo izquierdo y porque la deleción en peor caso (con necesidad de rebalanceo) es O(log(n)))
+    - heap binario O(n) (si min heap, desencolar es O(1) y reestructurar es O(n); si max heap O(n) tanto por búsqueda como por reestructuramiento)
+    - trie O(|a|**cantidad de digitos del minimo) (requiere búsqueda del mínimo) /* DUDA */
+Insertar (con necesidad de búsqueda): 
+    - Lista enlazada desordenada O(n) (por necesidad de búsqueda del elemento a insertar, la inserción en sí es O(1))
+    - Lista enlazada ordenada O(n) (idem desordenada, no se puede hace búsqueda binaria sobre lista enlazada, no se aprovecha el ordenamiento)
+    - ABB O(n) (por necesidad de búsqueda en caso de máximo desbalanceo)
+    - AVL O(log(n)) (porque la búsqueda es O(log(n)) y la inserción en peor caso (con necesidad de rebalanceo) es O(log(n)))
+    - heap binario O(n) (insertar en sí es O(log(n)), pero la búsqueda es O(n))
+    - trie O(|k|)
+Borrar (con necesidad de búsqueda):
+    - Lista enlazada desordenada O(n) (por necesidad de búsqueda del elemento a borrar, la deleción en sí es O(1))
+    - Lista enlazada ordenada O(n) (idem desordenada, no se puede hace búsqueda binaria sobre lista enlazada, no se aprovecha el ordenamiento)
+    - ABB O(n) (por necesidad de búsqueda en caso de máximo desbalanceo, luego el borrado en sí es O(1))
+    - AVL O(log(n)) (porque la búsqueda es O(log(n)) y la deleción en peor caso (con necesidad de rebalanceo) es O(log(n)))
+    - heap binario O(n) (requiere búsqueda)
+    - trie O(|k|)
+
+2.1.no ordenadas.
+proc union(inout l1: ListaEnlazada<T>, in l2: ListaEnlazada<T>) { // l1 de largo n, l2 de largo m
+    Iterador<ListaEnlazada<T>> iterador1 = new Iterador<ListaEnlazada<T>>; // O(1)
+    Iterador<ListaEnlazada<T>> iterador2 = new Iterador<ListaEnlazada<T>>; // O(1)
+    iterador2 = l2.iterador(); // O(1)
+    while (iterador2.haySiguiente()) { // O(1)
+        T elem2 = iterador2.siguiente(); // O(1)
+        bool pertenece = false; // O(1)
+        iterador1 = l1.iterador(); // O(1)
+        while (iterador1.haySiguiente && !pertenece) { // O(1)
+            T elem1 = iterador1.siguiente(); // O(1)
+            if (elem1 == elem2) { // O(1)
+                pertenece = true; // O(1)
+            }
+        } // O(n)
+        if (!pertenece) { // O(1)
+            l1.agregarAtrás(elem2); // O(cp(T))
+        }
+    } // O((n + cp(T))*m)
+} // O((n + cp(T))*m)
+
+proc interseccion(in l1, l2: ListaEnlazada<T>, out l: ListaEnlazada<T>) { // l1 de largo n, l2 de largo m
+    ListaEnlazada<T> l = new ListaEnlazada<T>; // O(1)
+    l = listaVacía(); // O(1)
+    Iterador<ListaEnlazada<T>> iterador1 = new Iterador<ListaEnlazada<T>>; // O(1)
+    Iterador<ListaEnlazada<T>> iterador2 = new Iterador<ListaEnlazada<T>>; // O(1)
+    iterador2 = l2.iterador(); // O(1)
+    while (iterador2.haySiguiente()) { // O(1)
+        T elem2 = iterador2.siguiente(); // O(1)
+        bool pertenece = false; // O(1)
+        iterador1 = l1.iterador(); // O(1)
+        while (iterador1.haySiguiente && !pertenece) { // O(1)
+            T elem1 = iterador1.siguiente(); // O(1)
+            if (elem1 == elem2) { // O(1)
+                pertenece = true; // O(1)
+            }
+        } // O(n)
+        if (pertenece) { // O(1)
+            l.agregarAtrás(elem2); // O(cp(T))
+        }
+    } // O((n + cp(T))*m)
+    return l; // O(1)
+} // O((n + cp(T))*m)
+
+2.1.ordenadas (de menor a mayor). /* DUDA no es posible que sea necesario hacer semejante desastre - necesito consejos para saber cómo refactorizar */
+proc union(in l1, l2: ListaEnlazada<T>, out l: ListaEnlazada<T>) { // l1 de largo n, l2 de largo m
+    ListaEnlazada<T> l = new ListaEnlazada<T>; // O(1)
+    l = listaVacía(); // O(1)
+    Iterador<ListaEnlazada<T>> iterador1 = new Iterador<ListaEnlazada<T>>; // O(1)
+    Iterador<ListaEnlazada<T>> iterador2 = new Iterador<ListaEnlazada<T>>; // O(1)
+    iterador1 = l2.iterador(); // O(1)
+    iterador2 = l2.iterador(); // Ö(1)
+    bool hayElems = false; // O(1)
+
+    if (iterador1.haySiguiente() && iterador2.haySiguiente()) { // O(1)
+        T elem1 = iterador1.siguiente(); // O(1)
+        T elem2 = iterador2.siguiente(); // O(1)
+        hayElems = true; // O(1)
+    }
+
+    while (iterador1.haySiguiente() && iterador2.haySiguiente()) { // O(1)
+        if (elem1 < elem2) { // O(ord(T))
+            l.agregarAtrás(elem1); // O(cp(T))
+            elem1 = iterador1.siguiente(); // O(1) // quedan elems de l2 y último de l1
+        } else if (elem1 > elem2) { // O(ord(T))
+            l.agregarAtrás(elem2); // O(cp(T))
+            elem2 = iterador2.siguiente(); // O(1) // quedan elems de l1 y último de l2
+        } else {
+            l.agregarAtrás(elem1); // O(cp(T))
+            elem1 = iterador1.siguiente(); // O(1)
+            elem2 = iterador2.siguiente(); // O(1) // quedan elems de l2 y último de l1, elems de l1 y último de l2, o los dos últimos de ambas
+        }
+    } // O(max{n,m}*(ord(T) + cp(T)))
+
+    if (hayElems && !iterador1.haySiguiente() && !iterador2.haySiguiente()) { // O(1) // caso: quedaron los dos últimos de ambas
+        if (elem1 < elem2) { // O(ord(T))
+            l.agregarAtrás(elem1); // O(cp(T))
+        } else {
+            l.agregarAtrás(elem2); // O(cp(T))
+        }
+    }
+
+    if (iterador1.haySiguiente()) { // O(1) // caso: quedan elems de l1 y último de l2, o l2 nunca tuvo elems
+        while (iterador1.haySiguiente() { // O(1)
+            if (hayElems && elem2 < elem1) { // O(ord(T))
+                l.agregarAtrás(elem2); // O(cp(T))
+                hayElems = false; // O(1)
+            } else {
+                l.agregarAtrás(elem1); // O(cp(T))
+                elem1 = iterador1.siguiente(); // O(1)
+            }
+        } // O(n*(cp(T) + ord(T)))
+        if (hayElems) { // O(1)
+            if (elem1 < elem2) { // O(ord(T))
+                l.agregarAtrás(elem1); // O(cp(T))
+                l.agregarAtrás(elem2); // O(cp(T))
+            } else {
+                l.agregarAtrás(elem2); // O(cp(T))
+                l.agregarAtrás(elem1); // O(cp(T))
+            }
+        } else {
+            l.agregarAtrás(elem1); // O(cp(T))
+        }
+    }
+
+    if (iterador2.haySiguiente()) { // O(1) // caso: quedan elems de l2 y último de l1, o l1 nunca tuvo elems
+        while (iterador2.haySiguiente() { // O(1)
+            if (hayElems && elem1 < elem2) { // O(ord(T))
+                l.agregarAtrás(elem1); // O(cp(T))
+                hayElems = false; // O(1)
+            } else {
+                l.agregarAtrás(elem2); // O(cp(T))
+                elem2 = iterador2.siguiente(); // O(1)
+            }
+        } // O(m*(cp(T) + ord(T)))
+        if (hayElems) { // O(1)
+            if (elem2 < elem1) { // O(ord(T))
+                l.agregarAtrás(elem2); // O(cp(T))
+                l.agregarAtrás(elem1); // O(cp(T))
+            } else {
+                l.agregarAtrás(elem1); // O(cp(T))
+                l.agregarAtrás(elem2); // O(cp(T))
+            }
+        } else {
+            l.agregarAtrás(elem2); // O(cp(T))
+        }
+    }
+    return l; // O(1)
+} // O(max{n, m}*(ord(T) + cp(T))) == O((n + m)*(ord(T) + cp(T)))
+
+proc interseccion(in l1, l2: ListaEnlazada<T>, out l: ListaEnlazada<T>) { // l1 de largo n, l2 de largo m
+    ListaEnlazada<T> l = new ListaEnlazada<T>; // O(1)
+    l = listaVacía(); // O(1)
+    Iterador<ListaEnlazada<T>> iterador1 = new Iterador<ListaEnlazada<T>>; // O(1)
+    Iterador<ListaEnlazada<T>> iterador2 = new Iterador<ListaEnlazada<T>>; // O(1)
+    iterador1 = l2.iterador(); // O(1)
+    iterador2 = l2.iterador(); // O(1)
+    bool hayElems = false; // O(1)
+
+    if (iterador1.haySiguiente() && iterador2.haySiguiente()) { // O(1)
+        T elem1 = iterador1.siguiente(); // O(1)
+        T elem2 = iterador2.siguiente(); // O(1)
+        hayElems = true; // O(1)
+    }
+
+    while (iterador1.haySiguiente() && iterador2.haySiguiente()) { // O(1)
+        if (elem1 < elem2) { // O(ord(T))
+            elem1 = iterador1.siguiente(); // O(1) // quedan elems de l2 y último de l1
+        } else if (elem1 > elem2) { // O(ord(T))
+            elem2 = iterador2.siguiente(); // O(1) // quedan elems de l1 y último de l2
+        } else {
+            l.agregarAtrás(elem1); // O(cp(T))
+            elem1 = iterador1.siguiente(); // O(1)
+            elem2 = iterador2.siguiente(); // O(1) // quedan elems de l2 y último de l1, elems de l1 y último de l2, o los dos últimos de ambas
+        }
+    } // O(max{n,m}*(ord(T) + cp(T)))
+
+    if (hayElems && !iterador1.haySiguiente() && !iterador2.haySiguiente()) { // O(1) // caso: quedaron los dos últimos de ambas
+        if (elem1 == elem2) { // O(eq(T))
+            l.agregarAtrás(elem1); // O(cp(T))
+        }
+    }
+
+    if (iterador1.haySiguiente()) { // O(1) // caso: quedan elems de l1 y último de l2, o l2 nunca tuvo elems
+        while (iterador1.haySiguiente() { // O(1)
+            if (hayElems && elem2 == elem1) { // O(eq(T))
+                l.agregarAtrás(elem1); // O(cp(T))
+                hayElems = false; // O(1)
+            } else {
+                elem1 = iterador1.siguiente(); // O(1)
+            }
+        } // O(n*(cp(T) + eq(T)))
+        if (hayElems) { // O(1)
+            if (elem1 == elem2) { // O(eq(T))
+                l.agregarAtrás(elem1); // O(cp(T))
+            }
+        }
+    }
+
+    if (iterador2.haySiguiente()) { // O(1) // caso: quedan elems de l2 y último de l1, o l1 nunca tuvo elems
+        while (iterador2.haySiguiente() { // O(1)
+            if (hayElems && elem1 == elem2) { // O(eq(T))
+                l.agregarAtrás(elem2); // O(cp(T))
+                hayElems = false; // O(1)
+            } else {
+                elem2 = iterador2.siguiente(); // O(1)
+            }
+        } // O(n*(cp(T) + eq(T)))
+        if (hayElems) { // O(1)
+            if (elem2 == elem1) { // O(eq(T))
+                l.agregarAtrás(elem2); // O(cp(T))
+            }
+        }
+    }
+    return l; // O(1)
+} // O(max{n, m}*(ord(T) + cp(T) + eq(T))) == O((n + m)*(ord(T) + cp(T) + eq(T)))
+
+/* obs.: no se pedía ninguna cota de complejidad, así que podría haber hecho algo MUCHO más simplificado usando los métodos ya dados por el apunte... */
+
+2.2. // complejidades basadas en la implementación que tengo hecha del TP de ABB
+proc union(inout a1, a2: ABB<T>) {
+    Iterador<ABB<T>> iterador1 = new Iterador<ABB<T>>; // O(1)
+    iterador1 = a1.iterador(); // O(n) // inicializar requiere llamar a ._buscar_nodo() y .minimo() en sucesión, ambas O(n)
+    while (iterador1.haySiguiente()) { // O(1) // en mi extraña implementación, .haySiguiente() sólo chequea que el nodo actual no sea null
+        T elem = iterador1.siguiente(); // O(n) // .siguiente() tiene cota O(n) por llamar a ._buscar_nodo()
+        a1.eliminar(elem); // O(n) // .eliminar() es O(n) por llamar a ._buscar_nodo() // innecesario, pero libera memoria
+        a2.insertar(elem); // O(n) // .insertar() es O(n) por llamar a ._buscar_nodo()
+    } // O(n**2)
+} // O(n**2)
+
+proc interseccion(inout a1: ABB<T>, in a2: ABB<T>) {
+    Iterador<ABB<T>> iterador1 = new Iterador<ABB<T>>; // O(1)
+    iterador1 = a1.iterador(); // O(n)
+    while (iterador1.haySiguiente()) { // O(1)
+        T elem = iterador1.siguiente(); // O(n)
+        if (!a2.pertenece(elem)) { // O(n) // la búsqueda con .pertenece(), como es esperable, es O(n)
+            a1.eliminar(elem); // O(n)
+        }
+    } // O(n**2)
+} // O(n**2)
+
+2.3. // asumo implementación de heap sobre array para los fines de determinar la complejidad asociada al iterador
+proc union(inout h1, h2: Heap<T>) {
+    Iterador<Heap<T>> iterador1 = new Iterador<Heap<T>>; // O(1)
+    iterador1 = h1.iterador(); // O(1)
+    while (iterador1.haySiguiente()) { // O(1)
+        T elem = iterador1.siguiente(); // O(1) // acceso a array
+        a1.eliminar(elem); // O(log(n))
+        a2.insertar(elem); // O(log(n))
+    } // O(n*log(n))
+} // O(n*log(n))
+
+proc interseccion(inout h1: Heap<T>, in h2: Heap<T>) {
+    Iterador<Heap<T>> iterador1 = new Iterador<Heap<T>>; // O(1)
+    iterador1 = h1.iterador(); // O(1)
+    while (iterador1.haySiguiente()) { // O(1)
+        T elem = iterador1.siguiente(); // O(1)
+        if (!h2.pertenece(elem)) { // O(n) // la búsqueda es O(n)
+            h1.eliminar(elem); // O(log(n))
+        }
+    } // O(n**2)
+} // O(n**2)
+
+3.
+Módulo matrizInfinitaImpl implementa TAD Matriz infinita de booleanos {
+    var elems: Array<Array<bool>>;
+    var complemento: bool;
+
+    /* obs.: el proc asignar, del que no se pide nada, se encarga de redimensionar a elems */
+
+    proc crear(out m: matrizInfinitaImpl) {
+        Array<bool> fila = new Array<bool>[0]; // O(1)
+        fila = []; // O(1)
+        Array<Array<bool>> matriz = new Array<Array<bool>>[0][0]; // O(1)
+        matriz = [sub]; // O(1)
+        m.elems = matriz; // O(1)
+        m.complemento = false; // O(1)
+    } // O(1)
+
+    proc ver(in m: matrizInfinitaImpl, in fila, columna: int, out res: bool) {
+        bool res = m.elems[fila][columna]; // O(1)
+        if (complemento) { // O(1)
+            res = !res; // O(1)
+        }
+        return res; // O(1)
+    } // O(1)
+
+    proc complementar(inout m: matrizInfinitaImpl) {
+        m.complemento = !m.complemento; // O(1)
+    } // O(1)
+}
+
+4. // asumo que T es numerico y que la matriz se inicializa con ceros
+Módulo matrizFinitaImpl<T> implementa TAD Matriz finita<T> {
+    var nFilas: int;
+    var nColumnas: int;
+    var elems: ListaEnlazada<struct<valor: T, fila: int, columna: int>>; // doblemente enlazada
+
+    proc definir(inout A: matrizFinitaImpl<T>, in fila, columna: int, in nuevoValor: T) { // asumo que la posición es valida como parte del requiere implicito, y que nuevoValor es distinto de 0
+        Iterador<ListaEnlazada<...>> iterador = new Iterador<ListaEnlazada<...>>; // Θ(1)
+        iterador = A.elems.iterador(); // Θ(1)
+        struct<...> nuevoElem = new struct<...>; // Θ(1)
+        nuevoElem = struct<valor: nuevoValor, fila: fila, columna: columna>; // Θ(1)
+        bool definido = false; // Θ(1)
+        while (iterador.haySiguiente() && !definido) { // Θ(1)
+            struct<...> elem = iterador.siguiente(); // Θ(1)
+            if fila < elem.fila || (fila == elem.fila && columna < elem.columna) { // Θ(1)
+                A.elems.agregarAdelante(nuevoElem); // Θ(1) // Θ(1) porque no es el .agregarAdelante() convencional, si no a partir de la posición actual del iterador
+                definido = true; // Θ(1)
+            } else if (fila == elem.fila && columna == elem.columna) { // Θ(1) // asumo O(eq(T)) constante
+                elem.valor = nuevoValor; // Θ(1) // actualiza la lista por aliasing
+                definido = true; // Θ(1)
+            }
+        } // Θ(n)
+        if (!definido) { // Θ(1)
+            A.elems.agregarAtrás(nuevoElem); // Θ(1) // Θ(1) porque no es el .agregarAtrás() convencional, si no a partir de la posición actual del iterador
+        }
+    } // Θ(n)
+
+    proc obtener(in A: matrizFinitaImpl<T>, in fila, columna: int, out res: T) {
+        T res = 0; // Θ(1)
+        Iterador<ListaEnlazada<...>> iterador = new Iterador<ListaEnlazada<...>>; // Θ(1)
+        iterador = A.elems.iterador(); // Θ(1)
+        while (iterador.haySiguiente()) { // Θ(1)
+            struct<...> elem = iterador.siguiente(); // Θ(1)
+            if (elem.fila == fila && elem.columna == columna) { // Θ(1)
+                res = elem.valor; // Θ(1)
+            }
+        } // Θ(n)
+        return res; // Θ(1)
+    } // Θ(n)
+
+    proc sumarMatrices(in A, B: matrizFinitaImpl<T>, out C: matrizFinitaImpl<T>) { // merge
+        int filas = A.nFilas; // Θ(1)
+        int columnas = A.nColumnas; // Θ(1)
+        matrizFinitaImpl<T> C = new matrizFinitaImpl<T>; // Θ(1)
+        C = crear(filas, columnas); // O(1)
+        struct<...> nuevoElem = new struct<...>; // Θ(1)
+        
+        Iterador<ListaEnlazada<...>> iteradorA = new Iterador<ListaEnlazada<...>>; // Θ(1)
+        Iterador<ListaEnlazada<...>> iteradorB = new Iterador<ListaEnlazada<...>>; // Θ(1)
+        iteradorA = A.elems.iterador(); // Θ(1)
+        iteradorB = B.elems.iterador(); // Θ(1)
+
+        if (!iteradorA.haySiguiente()) {
+            C.elems.concatenar(B.elems); // Θ(n + m), n = 0
+            return C; // Θ(1)
+        }
+        if (!iteradorB.haySiguiente()) {
+            C.elems.concatenar(A.elems); // Θ(n + m), m = 0
+            return C; // Θ(1)
+        }
+
+        struct<...> elemA = A.elems.primero(); // Θ(1)
+        struct<...> elemB = B.elems.primero(); // Θ(1)
+        bool hayProxA = true; // Θ(1)
+        bool hayProxB = true; // Θ(1)
+
+        while (hayProxA || hayProxB) { // Θ(1)
+            hayProxA = iteradorA.haySiguiente(); // Θ(1)
+            hayProxB = iteradorB.haySiguiente(); // Θ(1)
+
+            if (elemA.fila == elemB.fila && elemA.columna == elemB.columna) { // Θ(1)
+                nuevoElem = struct<valor: elemA.valor + elemB.valor, fila: fila, columna: columna>; // Θ(1)
+                C.elems.agregarAtrás(nuevoElem); // Θ(1)
+                if (hayProxA) { // Θ(1)
+                    elemA = iteradorA.siguiente(); // Θ(1)
+                } 
+                if (hayProxB) { // Θ(1)
+                    elemB = iteradorA.siguiente(); // Θ(1)
+                } 
+                if (!hayProxA && !hayProxB) { // Θ(1)
+                    return C; // Θ(1)
+                }
+            }
+
+            if (elemA.fila < elemB.fila || (elemA.fila == elemB.fila && elemA.columna < elemB.columna)) {  // Θ(1)
+                C.elems.AgregarAtrás(elemA); // Θ(1)
+                if (hayProxA) { // Θ(1)
+                    elemA = iteradorA.siguiente(); // Θ(1)
+                } else {
+                    C.elems.AgregarAtrás(elemB); // Θ(1)
+                    while (iteradorB.haySiguiente()) { // Θ(1)
+                        elemB = iteradorB.siguiente(); // Θ(1)
+                        C.elems.AgregarAtrás(elemB); // Θ(1)
+                    } // Θ(m - n) con m > n
+                    return C; // Θ(1)
+                }
+            }
+
+            if (elemB.fila < elemA.fila || (elemB.fila == elemA.fila && elemB.columna < elemA.columna)) {  // Θ(1)
+                C.elems.AgregarAtrás(elemB); // Θ(1)
+                if (hayProxB) { // Θ(1)
+                    elemB = iteradorB.siguiente(); // Θ(1)
+                } else {
+                    C.elems.AgregarAtrás(elemA); // Θ(1)
+                    while (iteradorA.haySiguiente()) { // Θ(1)
+                        elemA = iteradorA.siguiente(); // Θ(1)
+                        C.elems.AgregarAtrás(elemA); // Θ(1)
+                    } // Θ(n - m) con n > m
+                    return C; // Θ(1)
+                }
+            }
+        } // Θ(n + m)
+    } // Θ(n + m)
+}
+
+5.
+Módulo DCH<K, V> implementa TAD DiccionarioConHistoria<K, V> { // complejidades dadas asumiendo O(eq(K)) == O(cp(k)) == O(cp(v)) == O(1)
+    var data: DiccionarioLineal<K, V>;
+    var cant: DiccionarioLineal<K, int>;
+
+    proc nuevoDiccionario(out res: DCH<K, V>) {
+        DCH<K, V> res = new DCH<K, V>; // O(1)
+        res.data = diccionarioVacío(); // O(1)
+        res.cant = diccionarioVacío(); // O(1)
+        return res; // O(1)
+    } // O(1)
+
+    proc está(in d: DCH<K, V>, in k: K, out res: bool) {
+        bool res = false; // O(1)
+        Iterador<DiccionarioLineal<K, V>> it = Iterador<new DiccionarioLineal<K, V>>; // O(1)
+        it = d.data.iterador(); // O(1)
+        while(!res && it.hay_siguiente()) { // O(1)
+            <K, V> <clave, _> = it.siguiente(); // O(1), considero que .siguiente(), además de devolver el próximo valor, avanza el iterador
+            res = clave == k; // O(1)
+        } // O(n)
+    } // O(n)
+
+    proc obtener(in d: DCH<K, V>, in k: K, out res: V) { // requiere que k esté en d.data, podría haberse simplemente usado d.data.obtener() de DiccionarioLineal
+        bool buscando = true; // O(1)        
+        Iterador<DiccionarioLineal<K, V>> it = Iterador<new DiccionarioLineal<K, V>>; // O(1)
+        it = d.data.iterador(); // O(1)
+        while(buscando && it.hay_siguiente()) { // O(1)
+            <K, V> <clave, res> = it.siguiente(); // O(1), considero que .siguiente(), además de devolver el próximo valor, avanza el iterador
+            buscando = clave != k; // O(1)
+        } // O(n)
+        return res; // O(1)
+    } // O(n)
+
+    proc definir(inout d: DCH<K, V>, in k: K, in v: V) {
+        if (!está(d, k)) { // O(n)
+            d.data.definir_rapido(k, v); // O(1)
+            d.cant.definir_rapido(k, 1); // O(1)
+        } else {
+            d.data.definir(k, v); // O(n)
+            cantidad = d.cant.obtener(k) + 1; // O(n)
+            d.cant.definir(k, cantidad); // O(n)
+        }
+    } // O(n)
+
+    proc borrar(inout d: DCH<K, V>, in k: K, out v: V) { // requiere que k esté en d.data
+        res = d.obtener(k); // O(n)
+        d.data.borrar(k); // O(n)
+        return res; // O(1)
+    } // O(n)
+
+    proc cant_significados(in d: DCH<K, V>, in k: K, out res: int) {
+        return d.cant.obtener(k); // O(n)
+    } // O(n)
+}
+
+6. // complejidades dadas asumiendo que comparar nodos y sus valores de tipo T es O(1)
+proc esCamino(in a: AB<T>, in s: Array<Nodo>, out res: bool) {
+    if (s.length == 0) { // O(1)
+        res = true; // O(1)
+    } else {
+        res = s[0] = a.raiz && s[s.length-1].izq == s[s.length-1].der == null; // O(1)
+        int i = 0; // O(1)
+        while (res && i < s.length-1) { // O(1)
+            res &= s[i].izq == s[i+1].izq || s[i].der == s[i+1].der; // O(1)
+        } // O(|s|)
+    }
+    return res; // O(1)
+} // O(|s|)
+
+proc hayCaminoDeAltura(in a: AB<T>, in n: int, out res: bool) {
+    // DFS pre-order (de raiz a izquierda a derecha)
+    bool res; // O(1)
+    if (n >= 1 && a.raiz = null) { // O(1)
+        res = false; // O(1)
+    } else if (n == 1) { // O(1)
+        res = a.raiz.izq == a.raiz.der == null; // O(1)
+    } else {
+        res = hayCaminoDeAltura(a.raiz.izq, n-1) || hayCaminoDeAltura(a.raiz.der, n-1); // recursión
+    }
+    return res; // O(1)
+} // no estoy para nada seguro de cual sería la mejor cota, pero estoy seguro de que puede acotarse por O(|a|)
+
+proc nivelCompleto(in a: AB<T>, in n: int, out res: bool) {
+    // DFS pre-order (de raiz a izquierda a derecha)
+    bool res; // O(1)
+    if (n >= 1 && a.raiz = null) { // O(1)
+        res = false; // O(1)
+    else if (n == 1) { // O(1)
+        res = true; // O(1)
+    else {
+        res = nivelCompleto(a.raiz.izq, n-1) && nivelCompleto(a.raiz.der, n-1); // recursión
+    }
+    return res; // O(1)
+} // nuevamente, al ser una DFS, puede ser acotado por O(|a|)
+
+proc estaCompleto(in a: AB<T>, out res: bool) {
+    int i = 0; // O(1)    
+    while (nivelCompleto(a, i)) { // O(|a|)
+        i++; // O(1)
+    } // O(|a|**2)
+    res !hayCaminoDeAltura(a, i+1); // O(|a|)
+    return res; // O(1)
+} // seguramente exista una mejor cota, pero aún más seguramente una cota válida es O(|a|**2)
+
+7. /* DUDA */
+
+8.1. /* DUDA ¿puedo asumir las cosas que asumo? Unión e intersección me quedan horribles */
+Módulo cojuntoMinMax<int> implementa TAD Conjunto<Nat> {
+    var elems: ListaEnlazada<int>; // siempre se mantiene ordenada
+    var min: int; // se inicializa como -1 y se actualiza al agregar elementos
+    var max: int; // idem min
+
+    proc agregar(inout c: conjuntoMinMax<int>, in elem: int) {
+        if (elem > c.max) { // O(1)
+            c.elems.agregar_atrás(elem); // O(cp(int)) == O(1)
+            c.max = elem; // O(1)
+        } else if (elem < c.min) {
+            c.elems.agregar_adelante(elem); // O(cp(int)) == O(1)
+            c.min = elem; // O(1)
+        } else {
+            c.elems.agregar_en_orden(elem); // O(n), asumo que ListaEnlazada<T> tiene implementado este proc que permite, con una sola pasada sobre la lista, agregar al elemento en la posición que le corresponde tal que se preserve el orden
+        }
+    } // O(1) si elem es nuevo max o min, O(n) si no
+
+
+    // asumo que el iterador tiene, además de .siguiente(), .avanzar(); .siguiente() sólo da el próximo elemento sin avanzar el iterador, .avanzar() lo avanza
+    // tanto .siguiente() como .avanzar() son O(1) dado que conjuntoLineal<T> se implementa sobre ListaEnlazada<T>
+    proc union(inout c1: conjuntoMinMax<int>, in c2: conjuntoMinMax<int>) {
+        if (c2.min > c1.max) { // O(1)
+            c1.elems = c1.elems.concatenar(c2.elems); // O(m)
+            if (c2.max != -1) { // O(1)
+                c1.max = c2.max; // O(1)
+            }
+        } else if (c1.min > c2.max) { // O(1)
+            c1.elems = c1.concatenar_adelante(c2.elems); // O(m), asumo que tengo una versión de concatenar que invierte el orden en el que se concatenan las listas
+            if (c2.min != -1) { // O(1)
+                c1.min = c2.min; // O(1)
+            }
+        } else { // merge
+            Iterador<ListaEnlazada<int>> it1 = new Iterador<ListaEnlazada<int>>; // O(1)
+            Iterador<ListaEnlazada<int>> it2 = new Iterador<ListaEnlazada<int>>; // O(1)
+            it1 = c1.elems.iterador(); // O(1)
+            it2 = c2.elems.iterador(); // O(1)
+            if (!it1.hay_siguiente()) { // O(1)
+                c1 = c2; // O(m), copia completa
+            } else if (it1.hay_siguiente() && it2.hay_siguiente()) { // O(1)
+                while (it1.hay_siguiente() && it2.hay_siguiente()) { // O(1)
+                    elem1 = it1.siguiente(); // O(1), no avanza
+                    elem2 = it2.siguiente();
+                    if (elem1 == elem2) { // O(1)
+                        it1.avanzar(); // O(1)
+                        it2.avanzar(); // O(1)
+                    } else if (elem1 < elem2) { // O(1)
+                        it1.avanzar()
+                    } else { // elem1 > elem2
+                        c1.elems.agregar_anterior(it1, elem2); // O(1), asumo que existe proc para insertar a la izquierda de donde está parado un dado iterador, no avanza el iterador
+                        it2.avanzar();
+                    }
+                } // O(n + m)
+                // si se salió del loop, es o porque se depletó c1.elems o c2.elems; en el segundo caso ya se terminó pero en el primero hay que recorrer el resto de los elementos de c2.elems y agregarlos a c1
+                while (it2.hay_siguiente()) { // O(1)
+                    c1.elems.agregar_atras(it2.siguiente()); // O(1)
+                    it2.avanzar(); // O(1)
+                } // O(m)
+                // por último, se deben setear correctamente min y max
+                c1.max = c1.elems.ultimo(); // O(1)
+                c1.min = c1.elems.primero(); // O(1)
+            }
+        }
+    } // O(1) o O(n + m) según el caso
+
+    proc interseccion(inout c1: conjuntoMinMax<int>, in c2: conjuntoMinMax<int>) {
+        if (c1.min > c2.max || c2.min > c1.max) { // O(1)
+            c1.elems = lista_vacía(); // O(1)
+            c1.min = -1; // O(1)
+            c1.max = -1; // O(1)
+        } else { // merge
+            Iterador<ListaEnlazada<int>> it1 = new Iterador<ListaEnlazada<int>>; // O(1)
+            Iterador<ListaEnlazada<int>> it2 = new Iterador<ListaEnlazada<int>>; // O(1)
+            it1 = c1.elems.iterador(); // O(1)
+            it2 = c2.elems.iterador(); // O(1)
+            if (!it1.hay_siguiente()) { // O(1)
+                c1 = c2; // O(m), copia completa
+            } else if (it1.hay_siguiente() && it2.hay_siguiente()) { // O(1)
+                while (it1.hay_siguiente() && it2.hay_siguiente()) { // O(1)
+                    elem1 = it1.siguiente(); // O(1), no avanza
+                    elem2 = it2.siguiente();
+                    if (elem1 == elem2) { // O(1)
+                        it1.avanzar(); // O(1)
+                        it2.avanzar(); // O(1)
+                    } else if (elem1 < elem2) { // O(1)
+                        c1.elems.borrar_siguiente(it1); // O(1), asumo que existe proc para borrar donde está parado un dado iterador, implicitamente avanza el iterador
+                    } else { // elem1 > elem2
+                        it2.avanzar();
+                    }
+                } // O(n + m)
+                // si se salió del loop, es o porque se depletó c1.elems o c2.elems; en el primer caso ya se terminó pero en el segundo hay que borrar el resto de los elementos de c1.elems
+                while (it1.hay_siguiente()) { // O(1)
+                    c1.elems.borrar_siguiente(it1); // O(1)
+                } // O(n)
+                // por último, se deben setear correctamente min y max
+                c1.max = c1.elems.ultimo(); // O(1)
+                c1.min = c1.elems.primero(); // O(1)
+            }
+        }
+    } // O(1) o O(n + m) según el caso
+}
+
+8.2.
+El tipo debe ser ordenable, los costos de copia y comparación deben ser O(1) y, 
+dado el diseño específicamente utilizado, debe haber al menos un elemento del tipo que pueda ser reservado para denotar la no existencia de mínimo o máximo 
+(como el -1 en el caso de los naturales, implementados con el tipo int).
+
+
+
+
+
