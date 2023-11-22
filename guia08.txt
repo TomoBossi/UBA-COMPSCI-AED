@@ -438,7 +438,8 @@ Se realizan una cantidad de llamados recursivos que es acotable por el logaritmo
 Por lo tanto, la complejidad de peor caso es O(n*log(m)).
 
 16.c.
-Otra forma es hacer radix sort sobre los digitos de los elementos del array input. Como la cantidad de digitos es a lo sumo la cantidad de digitos del máximo y como la cantidad de digitos de un valor es aproximadamente su logaritmo base 10, se obtiene también una complejidad O(n*log(m)).
+Otra forma es hacer radix sort sobre los digitos de los elementos del array input. Como la cantidad de digitos es a lo sumo la cantidad de digitos del máximo
+y como la cantidad de digitos de un valor es aproximadamente su logaritmo base 10, se obtiene también una complejidad O(n*log(m)).
 
 17.
 El elemento más grande del array sólo puede originalmente estar en la última o anteúltima posición del array.
