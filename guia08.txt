@@ -37,7 +37,7 @@ algoritmo merge_preordered_subarrays_sort(in conjarr: Array<Array<int>>, out res
 Cada merge es de complejidad lineal igual a la suma de las longitudes de los subarrays mergeados, 
 que eventualmente puede ser acotada por la cantidad total de elementos t.
 Como en cada llamado se divide a conjarr en 2, se pueden realizar a lo sumo en el orden de log(n) llamados, siendo n la longitud original de conjarr.
-Entonces la complejidad del algoritmo merge_preordered_subarrays_sort es O(t*log(n)). /* DUDA ¿justificación correcta? */
+Entonces la complejidad del algoritmo merge_preordered_subarrays_sort es O(t*log(n)).
 
 5.
 El algoritmo propuesto es muy similar al del ejercicio 7., cambiando solamente el orden de los elementos en la dupla y el criterio de ordenamiento,
@@ -263,7 +263,7 @@ algoritmo total_sort(inout A: Array<T>): // T comparable
 10.2.
 Cada paso de la recursión es O(m) con m la longitud del array input, que es acotable por la longitud del input original n.
 Se realizan una cantidad de llamados recursivos que es logaritmo de n.
-Por lo tanto, la complejidad de peor caso es O(n*log(n)). /* DUDA existe mejor cota? */
+La complejidad de peor caso es O(n*log(n)). Por teorema maestro (no visto en clase) puede demostrarse que existe una mejor cota: O(n). Esto es porque tanto casi_sort() como merge() son de complejidad lineal sobre el tamaño del input y operan primero sobre todo el input, luego sobre la mitad, luego sobre un cuarto, etcétera. En total realizan en el orden de un múltiplo de 2*n operaciones cada una, que puede ser acotado por O(n).
 
 10.3.
 Creo que es imposible, por la necesidad de mergear. El simple hecho de ordenar sublistas recursivamente requiere complejidad O(n).
@@ -438,7 +438,8 @@ Se realizan una cantidad de llamados recursivos que es acotable por el logaritmo
 Por lo tanto, la complejidad de peor caso es O(n*log(m)).
 
 16.c.
-/* DUDA no se me ocurren otras dos formas */
+Otra forma es hacer radix sort sobre los digitos de los elementos del array input. Como la cantidad de digitos es a lo sumo la cantidad de digitos del máximo
+y como la cantidad de digitos de un valor es aproximadamente su logaritmo base 10, se obtiene también una complejidad O(n*log(m)).
 
 17.
 El elemento más grande del array sólo puede originalmente estar en la última o anteúltima posición del array.
