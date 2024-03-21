@@ -1,0 +1,680 @@
+\documentclass[10pt,a4paper]{article}
+
+\input{AEDmacros}
+\usepackage{caratula} % Version modificada para usar las macros de algo1 de ~> https://github.com/bcardiff/dc-tex
+
+\newcommand{\predRef}{\texttt}
+\newcommand{\var}{\text}
+\renewcommand{\wp}{\text{wp}}
+\newcommand{\isDef}{\text{def}}
+
+\titulo{Trabajo práctico 1: Especificación y WP}
+\subtitulo{Elecciones nacionales}
+
+\fecha{\today}
+
+\materia{Algoritmos y Estructuras de Datos}
+\grupo{Grupo 42}
+
+\integrante{Bossi, Tomás}{50/17}{tomasbossi97@gmail.com}
+\integrante{Dominguez, Rocio Julieta}{798/22}{rociodominguezcpm@gmail.com}
+\integrante{Stabile, Delfina}{819/22}{delfistabile18@gmail.com}
+\integrante{Ziger, Bruno Martín}{218/23}{ziger.bruno@gmail.com}
+% Pongan cuantos integrantes quieran
+
+% Declaramos donde van a estar las figuras
+% No es obligatorio, pero suele ser comodo
+\graphicspath{{../static/}}
+
+\begin{document}
+
+\maketitle
+
+\section{Especificación}
+
+\subsection*{Aclaraciones sobre las especificaciones}
+\begin{itemize}
+  \item En todos los puntos, asumimos que no pueden haber empates entre partidos, ni tampoco entre cualquiera de los partidos y los votos en blanco, para todos los escrutinios. Esto lo implementamos con el predicado sinRepetidos, en los casos donde el funcionamiento del programa depende de esta condición.
+  \item En la especificacion del problema hayBallotage, excluimos en los predicados la ultima posición mediante la función $\predRef{subseq}$ para excluir los votos en blancos de los máximos (\ref{ejercicio_1}).
+  \item Decidimos aplicar el umbral del $3\%$ en el ejercicio 4 de la siguiente manera: para aquellos partidos cuyo porcentaje de votos no supere el umbral del $3\%$, su fila en la matriz D'Hondt será una lista de ceros (''aplanando'' los resultados pequeños) (\ref{fila_ceros}). Entonces el caso donde los coeficientes son $0$ se excluye del requiere de que la matriz tenga todos los cocientes distintos. Con esto, somos consistentes y evitamos el problema de los votos en blanco en el ejercicio 5 (\ref{ejercicio_5}).
+\end{itemize}
+
+\subsection{hayBallotage} \label{ejercicio_1}
+\begin{proc}{hayBallotage}{\In escrutinio : \TLista{\ent}}{\bool}
+	% \modifica{parametro1, parametro2, ...}
+	\requiere{\longitud{\var{escrutinio}} \geq 3 \land \predRef{sinRepetidos}(\var{escrutinio}) \land \predRef{sinNegativos}(\var{escrutinio})}
+    \asegura{\var{res} = \False \Iff \predRef{elMaximoTieneMasDeCuarentaYCinco}(\var{escrutinio}) \lor \\
+    (\predRef{elMaximoTieneMasDeCuarenta}(\var{escrutinio}) \land
+    \predRef{elMaximoTieneDiferenciaMasDeDiez}(\var{escrutinio}))}
+    
+    \aux{suma}{\In $l$ : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|l|-1} l[i]}
+    \aux{porcentajeDelTotal}{\In $l$ : \TLista{\ent}, \In $i$ : \ent}{\ent}{100 \frac{l[i]}{ \predRef{suma}(l)}}
+
+    \pred{sinNegativos}{$l$: \TLista{\ent}}{
+        \paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{l}\implicaLuego l[i]\geq 0
+    }}
+    \pred{sinRepetidos}{$l$: \TLista{\ent}}{
+        \paraTodo[unalinea]{i, j}{\ent}{0\leq i < j < \longitud{l}\implicaLuego l[i]\neq l[j]}
+    }
+	\pred{esIdDelMaximo}{$l$ : \TLista{\ent}, $i$ : \ent} {
+        0 \leq i < \longitud{l} \yLuego
+        \paraTodo[unalinea]{j}{\ent}{0\leq j < \longitud{l}\implicaLuego l[j]\leq l[i]}
+    }
+	\pred{esIdDelSegundoMaximo}{$l$ : \TLista{\ent}, $i$ : \ent} {
+        0 \leq i < \longitud{l} \yLuego
+        (\neg \predRef{esIdDelMaximo}(l, i) \land
+        \paraTodo[unalinea]{j}{\ent}{0\leq j < \longitud{l} \land \neg \predRef{esIdDelMaximo}(l, j)\implicaLuego l[j]\leq l[i])}
+    }
+    \pred{elMaximoTieneMasDeCuarentaYCinco}{$l$ : \TLista{\ent}} {
+        \paraTodo[unalinea]{i}{\ent}{\predRef{esIdDelMaximo}(\predRef{subseq}(l, 0, \longitud{l} - 1), i)\implicaLuego \predRef{porcentajeDelTotal}(l, i) > 45}
+    }
+    \pred{elMaximoTieneMasDeCuarenta}{$l$ : \TLista{\ent}} {
+        \paraTodo[unalinea]{i}{\ent}{\predRef{esIdDelMaximo}(\predRef{subseq}(l, 0, \longitud{l} - 1), i)\implicaLuego \predRef{porcentajeDelTotal}(l, i) > 40}
+    }
+    \pred{elMaximoTieneDiferenciaMasDeDiez}{$l$ : \TLista{\ent}} {
+        \paraTodo{i, j}{\ent}{\predRef{esIdDelMaximo}(\predRef{subseq}(l, 0, \longitud{l} - 1), i)\land \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(l, 0, \longitud{l} - 1), j) \implicaLuego\\ \predRef{porcentajeDelTotal}(l, i) > \predRef{porcentajeDelTotal}(l, j) + 10}
+    }
+\end{proc}
+
+\subsection{hayFraude}
+\begin{proc}{hayFraude}{\In escrutinio\_presidencial : \TLista{\ent}, \In escrutinio\_senadores : \TLista{\ent}, \In escrutinio\_diputados : \TLista{\ent}}{\bool}
+    \requiere{\longitud{\var{escrutinio\_presidencial}} = \longitud{\var{escrutinio\_senadores}} = \longitud{\var{escrutinio\_diputados}} > 0}
+
+    \asegura{\var{res} = \False \Iff (\predRef{suma}(\var{escrutinio\_presidencial}) = \predRef{suma}(\var{escrutinio\_senadores}) = \predRef{suma}(\var{escrutinio\_diputados}))}
+
+    \aux{suma}{\In $l$ : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|l|-1} l[i]}
+\end{proc}
+
+\subsection{obtenerSenadoresEnProvincia}
+\begin{proc}{obtenerSenadoresEnProvincia}{\In escrutinio : \TLista{\ent}}{\ent$\times$\ent}
+	\requiere{\longitud{\var{escrutinio}} \geq 3 \land \predRef{sinRepetidos}(\var{escrutinio}) \land \predRef{sinNegativos}(\var{escrutinio})}
+
+    \asegura{\predRef{esIdDelMaximo}(\predRef{subseq}(\var{escrutinio}, 0, \longitud{\var{escrutinio}} - 1), res_0)}
+    \asegura{\predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{escrutinio}, 0, \longitud{\var{escrutinio}} - 1), res_1)}
+
+    \pred{sinRepetidos}{$l$ : \TLista{\ent}}{
+        \paraTodo[unalinea]{i, j}{\ent}{0\leq i < j < \longitud{l}\implicaLuego l[i]\neq l[j]}
+    }
+    \pred{sinNegativos}{$l$: \TLista{\ent}}{
+        \paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{l}\implicaLuego l[i]\geq 0
+    }}
+	\pred{esIdDelMaximo}{$l$ : \TLista{\ent}, $i$ : \ent} {
+        0 \leq i < \longitud{l} \yLuego
+        \paraTodo[unalinea]{j}{\ent}{0\leq j < \longitud{l} \implicaLuego l[j]\leq l[i]}
+    }
+	\pred{esIdDelSegundoMaximo}{$l$ : \TLista{\ent}, $i$ : \ent} {
+        0 \leq i < \longitud{l} \land
+        \neg \predRef{esIdDelMaximo}(l, i) \land
+        \paraTodo[unalinea]{j}{\ent}{(0\leq j < \longitud{l} \land \neg \predRef{esIdDelMaximo}(l, j))\implicaLuego l[j]\leq l[i]}
+    }
+\end{proc}
+
+\subsection{calcularDHondtEnProvincia} 
+\begin{proc}{calcularDHondtEnProvincia}{\In cant\_bancas : \ent, \In escrutinio : \TLista{\ent}}{ \TLista{\TLista{\ent}}}
+    \requiere{\longitud{\var{escrutinio}}\geq 2\land \predRef{sinNegativos}(\var{escrutinio})}
+    \requiere{
+        \paraTodo[unalinea]{i, j, k, l}{\ent}{0\leq i, k < \longitud{\var{escrutinio}} - 1\land 0\leq j, l < \var{cant\_bancas}\implicaLuego (i = k\land j = l)\lor \frac{\var{escrutinio}[i]}{j+1}\neq \frac{\var{escrutinio}[k]}{l+1}}
+    }
+    
+    \asegura{\longitud{\var{res}} = \longitud{\var{escrutinio}} - 1}
+    \asegura{\paraTodo[unalinea]{i, j}{\ent}{0\leq i < \longitud{\var{escrutinio} - 1}\implicaLuego \longitud{\var{res}[i]} = \var{cant\_bancas}}}
+    \asegura{\paraTodo[unalinea]{i, j, k, l}{\ent}{0\leq i, k < \longitud{\var{escrutinio}} - 1\land 0\leq j, l < \var{cant\_bancas}\implicaLuego (i = k\land j = l)\lor \var{res}[i][j] = 0\lor \var{res}[i][j]\neq \var{res}[k][l]}}
+    \asegura{\paraTodo[unalinea]{i, j}{\ent}{0 \leq i < \longitud{\var{escrutinio}} - 1\land 0 \leq j < \var{cant\_bancas}\implicaLuego \var{res}[i][j] = \predRef{DHont}(\var{escrutinio}, \var{escrutinio}[i], j)}}
+    
+    \aux{DHondt}{\In escrutinio : \TLista{\ent}, \In votos : \ent, \In cociente : \ent}{\float}{\IfThenElse{100\frac{\var{votos}}{\predRef{suma}(\var{escrutinio})}>3}{\frac{\var{votos}}{\var{cociente} + 1}}{0}}
+    \label{fila_ceros}
+
+    \pred{sinNegativos}{$l$ : \TLista{\ent}} {
+        \paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{l}\implicaLuego l[i]\geq 0
+    }}
+\end{proc}
+
+\subsection{obtenerDiputadosEnProvincia}\label{ejercicio_5}
+\begin{proc}{obtenerDiputadosEnProvincia}{\In cant\_bancas : \ent, \In escrutinio : \TLista{\ent}, \In dHondt : \TLista{\TLista{\ent}}}{\TLista{\ent}}
+    \requiere{\longitud{\var{dHondt}} > 0\land \var{cant\_bancas} > 0\land \predRef{sinNegativos}(\var{dHondt})\land \predRef{noTodosCeros}(\var{dHondt})}
+    \requiere{\paraTodo[unalinea]{i, j, k, l}{\ent}{0\leq i, k < \longitud{\var{dHondt}}\land 0\leq j, l < \var{cant\_bancas}\implicaLuego (i = k\land j = l)\lor \var{dHondt}[i][j] = 0\lor \var{dHondt}[i][j]\neq \var{dHondt}[k][l]}}
+    
+    \asegura{\longitud{\var{res}} = \longitud{\var{dHondt}}}
+    \asegura{\predRef{suma}(\var{res}) = \var{cant\_bancas}}
+    \asegura{\paraTodo[unalinea]{i}{\ent}{\var{res}[i] = \predRef{cuantosSuperan}(\var{dHondt}, i, \var{cant\_bancas})}}
+    %\asegura{(\paraTodo[unalinea]{i}{\ent}{0\leq j < \longitud{res} \implicaLuego res[j] = \sum\limits_{i=0}^{|dHondt|-1} $If esIdDelMaximo(dHondt[i],j) then 1 else 0 fi$)}}
+    \aux{suma}{\In $l$ : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|l|-1} l[i]}
+    \aux{posicion}{\In $M$ : \matriz{\ent}, \In $t$ : \ent}{\ent}{\sum\limits_{i=0}^{\longitud{M}-1}\sum\limits_{j=0}^{\longitud{M[i]}-1} \IfThenElse{M[i][j]\geq t}{1}{0} }
+    \aux{cuantosSuperan}{\In $M$ : \matriz{\ent}, \In $i$ : \ent, \In cant\_bancas : \ent}{\ent}
+    {\\\sum\limits_{j=0}^{\longitud{M[i]}-1}{\IfThenElse{\predRef{posicion}(M, M[i][j])\leq \var{cant\_bancas}}{1}{0}}}
+    
+    \pred{sinNegativos}{$M$ : \matriz{\ent}} {
+        \paraTodo[unalinea]{i, j}{\ent}{(0\leq i < \longitud{M}\yLuego 0\leq j < \longitud{M[i]})\implicaLuego M[i][j] \geq 0}
+    }
+    \pred{noTodosCeros}{$M$ : \matriz{\ent}} {
+        \existe[unalinea]{i, j}{\ent}{0\leq i < \longitud{M}\yLuego 0\leq j < \longitud{M[i]}\yLuego M[i][j] > 0}
+    }
+\end{proc}
+
+\subsection{validarListasDiputadosEnProvincia}
+\begin{proc}{validarListasDiputadosEnProvincia}{\In cant\_bancas : \ent, \In listas : \matriz{dni : \ent\times genero : \ent}}{\bool}
+    \requiere{\var{cant\_bancas} > 0\land \longitud{\var{listas}} > 0}
+    \requiere{\paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{\var{listas}}\implicaLuego (\predRef{tieneDnisValidos}(\var{listas}[i])\land \predRef{tieneGenerosValidos}(\var{listas}[i])}}
+    \asegura{\var{res} = \True \Iff \paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{\var{listas}}\implicaLuego \longitud{\var{listas}[i]} = \var{cant\_bancas} \land \predRef{alternaGeneros}(\var{lista}[i])}}
+    \pred{tieneDnisValidos}{lista : \TLista{\ent\times \ent}} {
+        \paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{\var{lista}}\implicaLuego (\var{lista}[i]_0 > 0)}
+    }
+    \pred{tieneGenerosValidos}{lista : \TLista{\ent\times \ent}} {
+        \paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{\var{lista}}\implicaLuego (\var{lista}[i]_1 = 1\lor \var{lista}[i]_1 = 2)}
+    }
+    \pred{alternaGeneros}{lista : \TLista{dni : \ent\times genero : \ent}} {
+        \paraTodo[unalinea]{i, j}{\ent}{0\leq i, j < \longitud{\var{lista}}\implicaLuego {\var{lista}[i]_2 = \var{lista}[j]_2 \Iff i \% 2 = j \% 2}}
+    }
+\end{proc}
+
+\section{Implementaciones}
+
+\subsection{hayBallotage}
+\begin{minipage}[t]{\textwidth}
+    \begin{lstlisting}[label=code:for]
+i := 0;
+total_votos := 0;
+maximo_sin_blanco := 0;
+segundo_sin_blanco := 0;
+
+while (i < |escrutinio|) do
+    suma := suma + escrutinio[i]
+    if (i < |escrutinio| - 1 && escrutinio[i] > maximo_sin_blanco) then
+        segundo_sin_blanco := maximo_sin_blanco
+        maximo_sin_blanco := escrutinio[i]
+    else
+        if (escrutinio[i] > segundo_sin_blanco) then
+            segundo_sin_blanco := escrutinio[i]
+        else
+            skip
+        endif;
+    endif;
+    i := i + 1
+endwhile;
+
+porcentaje_maximo := 100 * maximo_sin_blanco / total_votos;
+porcentaje_segundo := 100 * segundo_sin_blanco / total_votos;
+
+if (porcentaje_maximo > 45 || (porcentaje_maximo > 40 && porcentaje_maximo - porcentaje_segundo > 10)) then
+	res := false
+else
+    res := true
+endif;
+    \end{lstlisting}
+\end{minipage}
+
+\subsection{hayFraude}
+\begin{minipage}[t]{\textwidth}
+    \begin{lstlisting}[label=code:for]
+i := 0;
+suma_presidencial := 0;
+suma_senadores := 0;
+suma_diputados := 0;
+
+while (i < |escrutinio_presidencial|) do
+    suma_presidencial := suma_presidencial + escrutinio_presidencial[i]
+    suma_senadores := suma_senadores + escrutinio_senadores[i]
+    suma_diputados := suma_diputados + escrutinio_diputados[i]
+    i := i + 1
+endwhile;
+
+if (suma_presidencial == suma_senadores && suma_senadores == suma_diputados) then
+	res := false
+else
+    res := true
+endif;
+    \end{lstlisting}
+\end{minipage}
+
+\subsection{obtenerSenadoresEnProvincia}
+\begin{minipage}[t]{\textwidth}
+    \begin{lstlisting}[label=code:for]
+if (escrutinio[0] > escrutinio[1]) then
+    indice_maximo = 0
+    indice_segundo = 1
+else
+    indice_maximo = 1
+    indice_segundo = 0
+endif;
+i := 2;
+while (i < |escrutinio| - 1) do
+    if (escrutinio[i] > escrutinio[indice_maximo]) then
+        indice_segundo := indice_maximo
+        indice_maximo := i
+    else
+        if (escrutinio[i] > escrutinio[indice_segundo]) then
+            indice_segundo := i
+        else
+            skip
+        endif;
+    endif;
+    i := i + 1
+endwhile;
+
+res := (indice_maximo, indice_segundo);
+    \end{lstlisting}
+\end{minipage}
+% i := 0;
+% indice_maximo = -1;
+% indice_segundo = -1;
+
+% while (i < |escrutinio| - 1) do
+%     if (indice_maximo == -1 || escrutinio[i] > escrutinio[indice_maximo]) then
+%         indice_segundo := indice_maximo
+%         indice_maximo := i
+%     else
+%         if (indice_segundo == -1 || escrutinio[i] > escrutinio[indice_segundo]) then
+%             indice_segundo := escrutinio[i]
+%         else
+%             skip
+%         endif;
+%     endif;
+%     i := i + 1
+% endwhile;
+
+% res := (indice_maximo, indice_segundo);
+
+% res := setAt(res, 0, indice_maximo);
+% res := setAt(res, 1, indice_segundo);
+
+\subsection{validarListasDiputadosEnProvincia}
+\begin{minipage}[t]{\textwidth}
+    \begin{lstlisting}[label=code:for]
+res := true;
+i := 0;
+
+while (i < |listas|) do
+    lista := listas[i]
+    
+    if (|lista| != cant_bancas) then
+        res := false
+    else
+        skip
+    endif;
+    
+    j := 0
+    while (j < |lista| - 1) do
+        if (lista[j][1] == lista[j+1][1]) then
+            res := false
+        else
+            skip
+        endif;
+        j := j + 1;
+    endwhile;
+    
+    i := i + 1;
+endwhile;
+    \end{lstlisting}
+\end{minipage}
+
+\section{Demostraciones formales de correctitud}
+\subsection*{Aclaraciones sobre las demostraciones}
+\begin{itemize}
+    \item Usamos la notación $Q_{a_1, a_2, \ldots, a_k}^{b_1, b_2, \ldots, b_k}$ indicando que estamos reemplazando muchas variables libres de $Q$ secuencialmente, desde $a_i := b_1$ hasta $a_k := b_k$.
+\end{itemize}
+\subsection{hayFraude}
+Nombremos los predicados que vamos a utilizar para el método de la weakest precondition: 
+\begin{itemize}
+    \item El auxiliar para sumar los elementos de una lista: $\predRef{suma}(l) = \sum_{i=0}^{|l|-1}{l[i]}$
+    \item Precondición: $P = \{\longitud{\var{escrutinio\_presidencial}} = \longitud{\var{escrutinio\_senadores}} = \longitud{\var{escrutinio\_diputados}} > 0\}$
+    \item Postcondición: $Q = \{\var{res} = \False \Iff A\}$, donde $A = \{\predRef{suma}(\var{escrutinio\_presidencial}) = \predRef{suma}(\var{escrutinio\_senadores}) = \predRef{suma}(\var{escrutinio\_diputados})\}$
+    \item Condición del ciclo: $B = \{ i < |\var{escrutinio\_presidencial}| \}$
+    \item Condición del if: $C = \{\var{suma\_presidencial} = \var{suma\_senadores} = \var{suma\_diputados}\}$
+    \item Invariantes: $I_1 = \{ 0\leq i\leq |\var{escrutinio\_presidencial}|\yLuego \var{suma\_presidencial} = \sum_{k=0}^{i-1}{\var{escrutinio\_presidencial}[k]} \}$
+    \item $I_2 = \{ 0\leq i\leq |\var{escrutinio\_diputados}|\yLuego \var{suma\_diputados} = \sum_{k=0}^{i-1}{\var{escrutinio\_diputados}[k]} \}$
+    \item $I_3 = \{ 0\leq i\leq |\var{escrutinio\_senadores}|\yLuego \var{suma\_senadores} = \sum_{k=0}^{i-1}{\var{escrutinio\_senadores}[k]} \}$
+\end{itemize}
+Para demostrar la correctitud del ciclo, proponemos:
+\begin{itemize}
+    \item $P_c = \{i = 0\land \var{suma\_presidencial} = 0\land \var{suma\_diputados} = 0\land \var{suma\_senadores} = 0\land P\}$\\
+    Por ser razonable que $P_c$ sea la conjunción entre $P$ y el estado resultante de las instrucciones previas al ciclo.
+    \item $I = \{P \land I_1 \land I_2 \land I_3\}$\\
+    Porque refleja lo que desde la intuición comprendemos que debe ocurrir al principio, durante (luego de cada iteración) y al final de la ejecución del ciclo.
+    \item $Q_c = \{\var{suma\_presidencial} = \predRef{suma}(\var{escrutinio\_presidencial}) \land \var{suma\_senadores} = \predRef{suma}(\var{escrutinio\_senadores}) \land \var{suma\_diputados} = \predRef{suma}(\var{escrutinio\_diputados})\}$.
+    
+    Porque esto garantiza que las variables $\var{suma\_presidencial}$, $\var{suma\_senadores}$ y $\var{suma\_diputados}$ contienen la información que deberían.
+    \item $f_v = |\var{escrutinio\_presidencial}| - i$\\
+    Porque fv decrece en cada iteración del ciclo y se hace 0 luego de la última, cuando $i = |\var{escrutinio\_presicencial}|$.
+\end{itemize}
+
+Primero vamos a demostrar la correctitud del if que le sigue al ciclo, al cual llamamos $S_{\text{if}}$. Para ello, calculamos la wp de $S_{\text{if}}$ con la postcondición $Q$. Recordar que llamamos $C$ a la condición de este if.
+
+Aplicando los axiomas vistos en clase sobre la wp:
+$$\wp (\IfThenElse{C}{\var{res} := \False}{\var{res} := \True}, Q) \equiv \isDef(C) \yLuego ((C \land \wp(res := \False, Q)) \lor (\neg C \land \wp(res := \True, Q)))$$
+
+Y repetimos lo mismo en las wp de cada asignación por separado:
+$$\wp (\var{res} := \False, Q) \equiv \isDef(\False) \land Q_{\var{\False}}^{\var{res}}\equiv \{\False = \False \Iff A\} \equiv A$$
+$$\wp (\var{res} := \True, Q) \equiv \isDef(\True) \land Q_{\var{\True}}^{\var{res}}\equiv \{\True = \False \Iff A\} \equiv \neg A$$
+
+Combinando:
+$$\wp(\IfThenElse{C}{\var{res} := \False}{\var{res} := \True}, Q) \equiv \{(C \land A) \lor (\neg C \land \neg A)\} \equiv \{C\Iff A\}$$
+
+Para demostrar la correctitud de $\{Q_c\}S_{\text{if}}\{Q\}$ basta ver que $Q_c\implica \wp(S_{\text{if}}, Q) = \{C \Iff A\}$. Pero $Q_c$ implica que $\var{suma\_presidencial} = \predRef{suma}(\var{escrutinio\_presidencial})$, etc., y reemplazando estas igualdades en $C$ se obtiene $A$ y viceversa, con lo cual queda probado que $Q_c\implica \{C\Iff A\}$.
+
+Para probar la correctitud parcial de $\{P_c\}S_c\{Q_c\}$, por el Teorema del Inviarante, basta demostrar que:
+\begin{enumerate}
+    \itemsep 0em
+    \item $P_c\implica I$ 
+    \item $\{I\land B\}S_c\{I\}$
+    \item $I\land \neg B\implica Q_c$
+\end{enumerate}
+Demostremos cada ítem individualmente
+\begin{enumerate}
+    \item Notar que
+    $$P_c\implica i = 0\implica 0\leq i\leq |\var{escrutinio\_presidencial}|$$
+    pues $P_c\implica P$ y por $P$, vale $|\var{escrutinio\_presidencial}| > 0$. Por otro lado,
+    $$P_c\implica i = 0\land \var{suma\_presidencial} = 0\implica \sum_{k=0}^{i-1}{\var{escrutinio\_presidencial}[i]} = 0$$
+    dado que es la suma vacía.
+    Estas dos cosas implican $I_1$. Ídem para $P_c \implica I_2$ y $P_c \implica I_3$. Además, $P_c \implica P$. Uniendo todo, $P_c \implica I$.
+
+    \item Queremos ver que $\{I \land B\} \implica \wp(S_c, I)$, para lo cual calcularemos esta última wp.
+    $$\wp(S_c, I) \equiv \wp(S1_c; S2_c; S3_c; S4_c, I)\equiv \wp(S1_c, \wp(S2_c, \wp(S3_c, \wp(S4_c, I)))$$
+    donde $S1_c$, $S2_c$, $S3_c$ y $S4_c$ son las instrucciones dentro del ciclo.
+
+    $$\wp(S4_c, I) \equiv \isDef(i)\yLuego I_{i+1}^{i} \equiv I_{i+1}^{i}\equiv
+    Q_4$$
+    $$\wp(S3_c, Q_4)\equiv \isDef(sd + ed[i]) \yLuego Q_4{}_{sd+ed[i]}^{sd} \equiv 0 \leq i < |ed| \yLuego Q_4{}_{sd+ed[i]}^{sd} \equiv Q_3$$
+    $$\wp(S2_c, Q_3)\equiv \isDef(ss + es[i]) \yLuego Q_3{}_{ss+es[i]}^{ss} \equiv 0 \leq i < |es| \yLuego Q_3{}_{ss+es[i]}^{ss} \equiv Q_2$$ 
+    $$\wp(S1_c, Q_2)\equiv \isDef(sp + ep[i]) \yLuego Q_2{}_{sp+ep[i]}^{sp} \equiv 0 \leq i < |ep| \yLuego Q_2{}_{sp+ep[i]}^{sp} \equiv Q_1$$ 
+    donde $sd = \var{suma\_diputados}$, $ed = \var{escrutinio\_diputados}$, $ss = \var{suma\_senadores}$, $es = \var{escrutinio\_senadores}$, $sp = \var{suma\_presidencial}$ y $ep = \var{escrutinio\_presidencial}$. Es decir, la wp es equivalente a las tres condiciones de los rangos y a $I$ reemplazando $i$ por $i+1$ y agregando el nuevo término a cada sumatoria. Es decir:
+    
+    $$\wp(S_c, I)\equiv \{0 \leq i < |ep|, |ed|, |es| \yLuego |ep| = |ed| = |es| \land $$
+    $$(0\leq i+1\leq |\var{ep}|\yLuego \var{sp+ep[i]} = \sum_{k=0}^{i}{\var{ep}[k]}) \land $$
+    $$(0\leq i+1\leq |\var{ed}|\yLuego \var{sd+ed[i]} = \sum_{k=0}^{i}{\var{ed}[k]}) \land $$
+    $$(0\leq i+1\leq |\var{es}|\yLuego \var{ss+es[i]} = \sum_{k=0}^{i}{\var{es}[k]}\}$$
+    
+    Notar que $0 \leq i < |ep|, |ed|, |es|\implica (0\leq i+1\leq |\var{ep}|) \land (0\leq i+1\leq |\var{ed}|) \land (0\leq i+1\leq |\var{es}|)$, por lo que podemos quitar estas condiciones de la wp, dado que son redundantes. Por otro lado, notar que
+    $$sp + ep[i] = \sum_{k=0}^i{ep[k]}\iff sp = \sum_{k=0}^{i-1}{ep[k]}.$$
+
+    Operando similarmente con las otras variables, podemos obtener que
+    $$\wp(S_c, I)\equiv \{0 \leq i < |ep| = |ed| = |es| \yLuego \var{sp} = \sum_{k=0}^{i-1}{\var{ep}[k]} \land \var{sd} = \sum_{k=0}^{i-1}{\var{ed}[k]}) \land \var{ss} = \sum_{k=0}^{i-1}{\var{es}[k]}\}$$
+
+    Solo queda ver que $\{I \land B\} \implica \wp(S_c, I)$. Sabemos que
+    $$I\implica 0 \leq i\leq |ep| = |ed| = |es|\land \var{sp} = \sum_{k=0}^{i-1}{\var{ep}[k]}\land \var{sd} = \sum_{k=0}^{i-1}{\var{ed}[k]}\land \var{ss} = \sum_{k=0}^{i-1}{\var{es}[k]}$$
+    Por otro lado, $B = \{i < |ep|\}$, entonces $I\land B$ implican $\{0 \leq i < |ep| = |ed| = |es|\}$. Queda demostrado, entonces, que $\{I \land B\} \implica \wp(S_c, I)$ y por lo tanto se cumple $\{I\land B\}S_c\{I\}$.
+    
+    \item Puede verse que $I \land \neg B \implica \{i = |ep| = |ed| = |es|\}$, lo que a su vez implica:
+        \begin{itemize}
+            \item $\var{sp} = \sum_{k=0}^{i-1}{\var{ep}[k]} = \predRef{suma}(\var{ep})$
+            \item $\var{sd} = \sum_{k=0}^{i-1}{\var{ed}[k]} = \predRef{suma}(\var{ed})$
+            \item $\var{ss} = \sum_{k=0}^{i-1}{\var{es}[k]} = \predRef{suma}(\var{es})$
+        \end{itemize}
+    Como $Q_c$ es la conjunción de estos tres predicados, queda claro que $I \land \neg B \implica Q_c$.
+\end{enumerate}
+
+Ahora, tenemos que probar la terminación del ciclo. Para eso, por el Teorema de Terminación de Ciclos, basta con demostrar:
+\begin{enumerate}
+    \item $\{I \land B \land f_v = v_0\}S_c\{f_v < v_0\}$
+    \item $I \land (f_v \leq 0) \implica \neg B$
+\end{enumerate}
+Veamos que esto es cierto:
+\begin{enumerate}
+    \item Queremos ver que $\{I \land B \land f_v = v_0\} \implica \wp(S_c, f_v < v_0)$, para lo cual calcularemos esta última wp.
+    $$\wp(S_c, f_v < v_0) \equiv \isDef(i+1)\land \wp(S1_c; S2_c; S3_c; S4_c, f_v < v_0)\equiv \wp(S1_c, \wp(S2_c, \wp(S3_c, \wp(S4_c, f_v < v_0)))$$
+    En particular, podemos calcular
+    $$\wp(S4_c, f_v < v_0))) \equiv \wp(i := i + 1, |ep| - i < v_0))) \equiv \{|ep| - i - 1 < v_0\} \equiv \{f_v < v_0 + 1\}$$
+    Como las primeras tres líneas no alteran ninguna variable libre de la postcondición, sus wp son equivalentes a sus postcondiciones (las wp de las líneas siguientes). Por lo tanto, escribimos:
+    $$\wp(S_c, f_v < v_0) \equiv 0\leq i < |ep|, |ed|, |es| \yLuego f_v < v_0 + 1$$
+    dado que $\isDef(sp + ep[i])\Iff 0\leq i < |ep|$ y similarmente para las otras variables.
+    
+    Queda entonces ver que $\{I \land B \land f_v = v_0\} \implica \wp(S_c, f_v < v_0)$:
+    \begin{itemize}
+        \item $f_v = v_0$ implica $f_v < v_0 + 1$.
+        \item $I \land B$ implica $0 \leq i < |ep|, |ed|, |es|$.
+    \end{itemize}
+    Entonces queda demostrado que $\{I \land B \land f_v = v_0\}\implica \wp(S_c, f_v < v_0)$ y por lo tanto se cumple la tripla de Hoare $\{I \land B \land f_v = v_0\}S_c\{f_v < v_0\}$.
+    
+    \item Dado que $f_v \leq 0 \Iff |ep| \leq i$, se ve que $I \land f_v \leq 0$ implica $\neg (i < |ep|) \equiv \neg B$.
+\end{enumerate}
+
+Habiendo demostrado la correctitud parcial y la terminación del ciclo, queda demostrada la correcitud total con la precondición de ciclo $P_c$, el invariante $I$ y la función variante $f_v$ propuestos.
+
+Solo queda ver que $P \implica \wp(S1;S2;S3;S4, P_c)$, donde S1 a S4 son las primeras cuatro instrucciones del programa. Para ello, podemos calcular esta última wp. Como todas las opraciones en las instrucciones S1 a S4 están bien definidas,
+$$\wp(S1;S2;S3;S4,P_c) \equiv \{0 = 0\land 0 = 0\land 0 = 0\land 0 = 0\land P\} \equiv \{\True\land P\} \equiv \{P\}$$
+dado que reemplazamos todas las variables de $P_c$ por $0$.
+
+Entonces queda demostrado que $P \implica \wp(S1;S2;S3;S4,P_c)$, pues $P \implica P$, y queda demostrada la correctitud del programa completo respecto a su especificación luego de aplicar el Corolario de la Monotonía, habiendo sido demostrada la correctitud de las distintas partes del programa (antes, en y después del ciclo).
+
+
+\subsection{obtenerSenadoresEnProvincia}
+Nombremos los predicados y auxiliares que vamos a usar en la demostración de correctitud del código de este programa:
+\begin{itemize}
+    \item $\predRef{sinRepetidos}(l) = \{\paraTodo[unalinea]{i, j}{\ent}{0\leq i < j < \longitud{l}\implicaLuego l[i]\neq l[j]}\}$
+    \item $\predRef{sinNegativos}(l) = \{\paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{\var{l}}\implicaLuego \var{l}[i]\geq 0}\}$
+    \item $\predRef{esIdDelMaximo}(l, i) = \{0 \leq i < \longitud{l} \yLuego
+        \paraTodo[unalinea]{j}{\ent}{0\leq j < \longitud{l} \implicaLuego l[j]\leq l[i]}\}$
+    \item $\predRef{esIdDelSegundoMaximo}(l, i) = \{0 \leq i < \longitud{l} \land
+        \neg \predRef{esIdDelMaximo}(l, i) \land\\
+        \paraTodo[unalinea]{j}{\ent}{(0\leq j < \longitud{l} \land \neg \predRef{esIdDelMaximo}(l, j))\implicaLuego l[j]\leq l[i]}\}$
+    \item La precondición de la especificación: $P = \{\longitud{\var{escrutinio}} \geq 3 \land \predRef{sinRepetidos}(\var{escrutinio}) \land \predRef{sinNegativos}(\var{escrutinio})\}$
+    \item La postcondición de la especificación: $Q = \{\predRef{esIdDelMaximo}(\predRef{subseq}(\var{escrutinio}, 0, \longitud{\var{escrutinio}} - 1), res_0)\land  \\ \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{escrutinio}, 0, \longitud{\var{escrutinio}} - 1), res_1)\}$
+    \item La condición del primer if: $A = \{\var{escrutinio}[0] > \var{escrutinio}[1]\}$.
+    \item La condición del ciclo: $B = \{i < |\var{escrutinio}| - 1\}$.
+    \item La condición del primer if del ciclo: $C = \{\var{escrutinio}[i] > \var{escrutinio}[\var{indice\_maximo}]\}$.
+    \item La condición del segundo if del ciclo: $D = \{\var{escrutinio}[i] > \var{escrutinio}[\var{indice\_segundo}]\}$.
+\end{itemize}
+
+Para demostrar la correctitud del ciclo, proponemos la siguiente pre y postcondición, invariante y función variante:
+\begin{itemize}
+    \item $P_c = \{P \yLuego i = 2 \land (A \land \var{indice\_maximo} = 0 \land \var{indice\_segundo} = 1) \lor (\neg A \land \var{indice\_maximo} = 1 \land\var{indice\_segundo} = 0)\}$.
+    
+    Por ser razonable que $P_c$ sea la conjunción entre $P$ y el estado resultante de las instrucciones previas al ciclo.
+    
+    \item $I = \{2 \leq i < |\var{escrutinio}| \land 0 \leq \var{indice\_maximo}, \var{indice\_segundo} < |\var{escrutinio}| - 1 \yLuego\\ \predRef{esIdDelMaximo}(\predRef{subseq}(\var{escrutinio}, 0, i), \var{indice\_maximo})\land \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{escrutinio}, 0, i), \var{indice\_segundo})\}$.
+    
+    Porque refleja lo que desde la intuición comprendemos que debe ocurrir al principio, durante (luego de cada iteración) y al final de la ejecución del ciclo.
+
+    \item $Q_c = \{\predRef{esIdDelMaximo}(\predRef{subseq}(\var{escrutinio}, 0, \longitud{\var{escrutinio}} - 1), \var{indice\_maximo}) \land \\ \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{escrutinio}, 0, \longitud{\var{escrutinio}} - 1),  \var{indice\_segundo})\}$\\
+    Porque esto implica que al finalizar el ciclo las variables $\var{indice\_maximo}$ e $\var{indice\_segundo}$ van a contener a lo que queremos luego guardar y devolver en la variable $\var{res}$.
+    
+    \item $f_v = |\var{escrutinio}| - 1 - i$\\
+    Porque $f_v$ decrece en cada iteración del ciclo y se hace 0 luego de la última, cuando $i = |\var{escrutinio}| - 1$.
+\end{itemize}
+
+Comenzamos calculando la wp de la última instrucción del código:
+
+$$\wp(\var{res} := (\var{indice\_maximo}, \var{indice\_segundo}), Q) \equiv Q_{\var{indice\_maximo}, \var{indice\_segundo}}^{\var{res}_0, \var{res}_1} \equiv$$
+$$\{\predRef{esIdDelMaximo}(\predRef{subseq}(\var{escrutinio}, 0, \longitud{\var{escrutinio}} - 1), \var{indice\_maximo}) \land $$
+$$\predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{escrutinio}, 0, \longitud{\var{escrutinio}} - 1), \var{indice\_segundo})\} \equiv Q_c$$
+
+Para ver que la instrucción que le sigue al ciclo es correcta queremos ver que
+$$Q_c \implica \wp(\var{res} := (\var{indice\_maximo}, \var{indice\_segundo}), Q)$$
+pero como vimos esa wp es equivalente a $Q_c$, y $Q_c \implica Q_c$ es tautológico. Entonces queda probada la correctitud de la porción del programa posterior al ciclo.
+
+Para probar la correctitud parcial del ciclo, por el Teorema del Invariante basta con demostrar:
+\begin{enumerate}
+\itemsep 0em
+    \item $P_c\implica I$ 
+    \item $\{I\land B\}S_c\{I\}$
+    \item $I\land \neg B\implica Q_c$
+\end{enumerate}
+
+Procedamos:
+
+\begin{enumerate}
+    \item Dado que $P_c$ implica que
+    \begin{itemize}
+        \item $|\var{escrutinio}|\geq 3 \land i = 2 \implica 2 \leq i < |\var{escrutinio}|$.
+        \item $|\var{escrutinio}|\geq 3 \land \predRef{sinRepetidos}(\var{escrutinio})$ implica la excistencia de un primer y segundo máximo en la subsecuencia $\predRef{subseq}(\var{escrutinio}, 0, 2)$, según los predicados.
+        \item $A\land \var{indice\_maximo} = 0 \land \var{indice\_segundo} = 1$ implica que
+        $$\predRef{esIdDelMaximo}(\predRef{subseq}(\var{escrutinio}, 0, 2), 0) \land \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{escrutinio}, 0, 2), 1)$$
+        y que los índices de los máximos están entre 0 y $|\var{escrutinio}|$.
+        \item De forma análoga, si vale $\neg A \land \var{indice\_maximo} = 1 \land \var{indice\_segundo} = 0$, junto con la hipótesis de $\predRef{sinRepetidos}$, vale que
+        $$\predRef{esIdDelMaximo}(\predRef{subseq}(\var{escrutinio}, 0, 2), 1) \land \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{escrutinio}, 0, 2), 0)$$
+        y que los índices son válidos.
+    \end{itemize}
+    Entonces es cierto que $P_c \implica I$, como se quería probar.
+    
+    \item Queremos ver que $\{I \land B\} \implica \wp(S_c, I)$, para lo cual calcularemos esta última wp:
+    $$\wp(i := i + 1, I) \equiv I_{i+1}^i$$
+    $$\wp(S_c, I) \equiv \wp(\IfThenElse{C}{S_{11-12}}{S_{14-18}}, I_{i+1}^i) \equiv$$
+    $$\{0 \leq i, \var{i\_max} < |\var{escrutinio}|\yLuego (C \land \wp(S_{11-12}, I_{i+1}^i)) \lor (\neg C \land \wp(S_{14-18}, I_{i+1}^i))) \}$$
+    donde $S_{i-j}$ representa a la secuencia de instrucciones del programa de la línea $i$ a la línea $j$ inclusive, e $\var{i\_max} = \var{indice\_maximo}$ y $\var{i\_seg} = \var{indice\_segundo}$.
+
+    Podemos entonces calcular la wp de cada parte por separado:
+    $$\wp(S_{11-12}, I_{i+1}^i) \equiv \wp(\var{i\_seg} := \var{i\_max}, \wp(\var{i\_max} := i, I_{i+1}^i)) \equiv I_{i+1, \var{i\_max}, i}^{i, \var{i\_seg}, \var{i\_max}}$$
+    
+
+    $$\wp(S_{14-18}, I_{i+1}^i) \equiv \wp(\IfThenElse{D}{\var{i\_seg} := i}{skip}) \equiv$$
+    $$\{0 \leq i, \var{i\_seg} < |\var{escrutinio}| \yLuego ((D \land \wp(\var{i\_seg} := i, I_{i+1}^i)) \lor (\neg D \land \wp(skip, I_{i+1}^i)))\} \equiv$$
+    $$\{0 \leq i, \var{i\_seg} < |\var{escrutinio}| \yLuego ((D \land I_{i+1,i}^{i, \var{i\_seg}}) \lor (\neg D \land I_{i+1}^i))\}$$
+    
+    Entonces,
+    $$\wp(S_c, I) \equiv 0 \leq i, i\_max < |esc| \yLuego (C \land I_{i+1, \var{i\_max}, i}^{i, \var{i\_seg}, \var{i\_max}}) \lor (\neg C \land (0 \leq i, i\_seg < |esc| \yLuego ((D \land I_{i+1,i}^{i,i\_seg}) \lor (\neg D \land I_{i+1}^i)))))$$
+
+    Desglosando esta última igualdad:    
+    \begin{itemize}
+        \item $I_{i+1}^{i} \equiv \{2 \leq i + 1 < |\var{esc}| \land 0 \leq i\_max, i\_seg < |\var{esc}| - 1 \yLuego\\ \predRef{esIdDelMaximo}(\predRef{subseq}(\var{esc}, 0, i + 1), i\_max) \land\\ \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{esc}, 0, i + 1), i\_seg)\}$
+        \item $I_{i+1,i}^{i,i\_seg} \equiv \{2 \leq i + 1 < |\var{esc}| \land 0 \leq i\_max, i < |\var{esc}| - 1 \yLuego\\ \predRef{esIdDelMaximo}(\predRef{subseq}(\var{esc}, 0, i + 1), i\_max) \land\\ \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{esc}, 0, i + 1), i)\}$
+        \item $I_{i+1, \var{i\_max}, i}^{i, \var{i\_seg}, \var{i\_max}} \equiv \{2 \leq i + 1 < |\var{esc}| \land 0 \leq i, i\_max < |\var{esc}| - 1 \yLuego\\ \predRef{esIdDelMaximo}(\predRef{subseq}(\var{esc}, 0, i + 1), i) \land\\ \predRef{esIdDelSegundoMaximo}(\predRef{subseq}(\var{esc}, 0, i + 1), i\_max)\}$
+    \end{itemize}
+
+    Notemos que parte del invariante y $B$, $(2 \leq i < |\var{esc}| \land 0 \leq i\_max, i\_seg < |\var{esc}| - 1 \land i < |\var{esc}| - 1)$, implica $(0 \leq i, i\_max, i\_seg < |esc| - 1) \land (2 \leq i + 1 < |esc|)$, que a su vez implica $(0 \leq i, i\_max, i\_seg < |esc|)$. Para ver que $\{I \land B\} \implica \wp(S_c, I)$, basta con ver que esto se cumple al analizar los tres casos posibles dentro del ciclo (o más bien, sus paralelos dentro de la \wp):
+    \begin{itemize}
+        \item Caso $C \equiv esc[i] > esc[i\_max].$ En este caso, para que $\{I \land B\} \implica \wp(S_c, I)$ basta con que $\{I \land B\} \implica \{0 \leq i, i\_max < |esc| \yLuego C \land I_{i+1, \var{i\_max}, i}^{i, \var{i\_seg}, \var{i\_max}}\}$ (ya que es uno de los terminos separados por una disyuncion logica del resto de los terminos). Como ya comentamos, $\{I \land B\} \implica \{0 \leq i, i\_max < |esc|\}$, y estamos asumiendo que estamos en el caso en que vale $C$. Entonces queda ver que, asumiendo $C$, $\{I \land B\} \implica \{I_{i+1, \var{i\_max}, i}^{i, \var{i\_seg}, \var{i\_max}}\}$. Esto es verdadero ya que $I \land B \land C$ implica que $i$ es el índice del máximo de la subsecuencia $subseq(esc, 0, i+1)$ y que por lo tanto $i$ es el nuevo $i\_max$ y el $i\_max$ anterior es el nuevo $i\_seg$, que es precisamente lo que está expresado en $I_{i+1, \var{i\_max}, i}^{i, \var{i\_seg}, \var{i\_max}}$. Además, como ya se comentó, $I \land B \implica 2 \leq i + 1 < |\var{esc}| \land 0 \leq i, i\_max < |\var{esc}| - 1$. Entonces vale que $\{I \land B\} \implica \{I_{i+1, \var{i\_max}, i}^{i, \var{i\_seg}, \var{i\_max}}\}$ y por lo tanto también que $\{I \land B\} \implica \wp(S_c, I)$ si vale $C$.
+
+        \item Caso $\neg C \land D \equiv esc[i] \leq esc[i\_max] \land esc[i] > esc[i\_seg]$. Para que $\{I \land B\} \implica \wp(S_c, I)$ basta con que $\{I \land B\} \implica \{0 \leq i, i\_max < |esc| \yLuego \neg C \land (0 \leq i, i\_seg < |esc| \yLuego D \land I_{i+1,i}^{i,i\_seg})\}$. Ya comentamos que $\{I \land B\} \implica \{0 \leq i, i\_max, i\_seg < |esc|\}$, y estamos asumiendo que estamos en el caso en que vale $\neg C \land D$. Queda ver que, asumiendo $\neg C \land D$, $\{I \land B\} \implica \{I_{i+1,i}^{i,i\_seg}\}$. Esto es verdadero pues $I \land \land B \neg C \land D$ implica que i es el índice del segundo máximo de la subsecuencia $subseq(esc, 0, i+1)$ y que por lo tanto $i$ es el nuevo $i\_seg$ y el $i\_max$ anterior no es afectado, exáctamente lo que expresa $I^{i+1,i}_{i,i\_seg}$. Además, como ya se comentó, $I \land B \implica 2 \leq i + 1 < |\var{esc}| \land 0 \leq i\_max, i < |\var{esc}| - 1$. Entonces vale que $\{I \land B\} \implica \{I_{i+1, i}^{i, i\_seg}\}$ y por lo tanto también que $\{I \land B\} \implica \wp(S_c, I)$ si vale $\neg C \land D$.
+    
+        \item Caso $\neg C \land \neg D \equiv esc[i] \leq esc[i\_max] \land esc[i] \leq esc[i\_seg]$. Para que $\{I \land B\} \implica \wp(S_c, I)$ basta con que $\{I \land B\} \implica \{0 \leq i, i\_max < |esc| \yLuego \neg C \land (0 \leq i, i\_seg < |esc| \yLuego \neg D \land I_{i+1}^{i})\}$. Ya comentamos que $\{I \land B\} \implica \{0 \leq i, i\_max, i\_seg < |esc|\}$, y estamos asumiendo que estamos en el caso en que vale $\neg C \land \neg D$. Queda ver que, asumiendo $\neg C \land \neg D$, $\{I \land B\} \implica \{I_{i+1}^{i}\}$. Esto es verdadero considerando que $I \land B \land \neg C \land \neg D$ implica que no se tiene ni al máximo ni al segundo máximo de $subseq(esc, 0, i+1)$ en la posición $i$ y que por lo tanto $i\_max$ e $i\_seg$ no son modificados en la iteración, que es exáctamente lo que expresa $I_{i+1}^{i}$. Por último, sabemos que $I \land B \implica 2 \leq i + 1 < |\var{esc}| \land 0 \leq i\_max, i\_seg < |\var{esc}| - 1$. Entonces vale que $\{I \land B\} \implica \{I_{i+1}^{i}\}$ y por lo tanto también que $\{I \land B\} \implica \wp(S_c, I)$ si vale $\neg C \land \neg D$.
+    \end{itemize}
+
+    Dado que siempre se cumple que $(C \lor (\neg C \land (D \lor \neg D))) \equiv ((C) \lor (\neg C \land D) \lor (\neg C \land \neg D))$ (es decir, ocurre uno de estos 3 casos analizados) y a que se probó que en todos los casos vale $\{I \land B\} \implica \wp(S_c, I)$, entonces es verdad que $\{I \land B\} \implica \wp(S_c, I)$ en general, y por lo tanto tambíen que $\{I\land B\}S_c\{I\}$ como se quería demostrar.
+    \item $I \land \neg B \implica i = |\var{escrutinio}| - 1$, condición bajo la cual $Q_c$ es idéntico a parte de $I$. Por lo tanto es inmediato que $I\land \neg B\implica Q_c$.
+\end{enumerate}
+Para probar la terminación del ciclo, debemos demostrar:
+\begin{enumerate}
+    \item $\{I \land B \land f_v = v_0\}S_c\{f_v < v_0\}$
+    \item $I \land f_v \leq 0 \implica \neg B$
+\end{enumerate}
+Veamos que esto es cierto:
+\begin{enumerate}
+    \item Queremos ver que $\{I \land B \land f_v = v_0\} \implica \wp(S_c, f_v < v_0)$, para lo cual calcularemos esta última wp.
+    
+    $\wp(i := i + 1, |esc| - 1 - i < v_0) \equiv \{|esc| - 1 - i - 1 < v_0\} \equiv \{f_v < v_0 + 1\}$
+    \\\\
+    $\wp(S_c, f_v < v_0) \equiv \wp(\IfThenElse{C}{S_{11-12}}{S_{14-18}}, f_v < v_0 + 1)$\\
+    Como $f_v < v_0 + 1$ no depende de $i\_max$ ni de $i\_seg$, esto resulta en:
+    
+    $\wp(S_c, f_v < v0) \equiv 0 \leq i, i\_max < |esc| \yLuego ((C \land f_v < v_0+1) \lor (\neg C \land (0 \leq i, i\_seg < |esc| \yLuego ((D \land f_v < v_0 + 1) \lor (\neg D \land f_v < v_0 + 1)))))$
+
+    Luego, dado que
+    \begin{itemize}
+        \item $f_v = v_0 \implica f_v < v_0+1$
+        \item $I \land B \implica 0 \leq i, i\_max, i\_seg < |esc|$
+        \item Siempre se cumple $(C \lor (\neg C \land (D \lor \neg D)))$
+    \end{itemize}
+    Se vé que $\{I \land B \land f_v = v_0\} \implica \wp(S_c, f_v < v_0)$ y que por lo tanto queda probado que $\{I \land B \land f_v = v_0\}S_c\{f_v < v_0\}$.
+    \item Considerando que $f_v \leq 0 \Iff i \geq |esc| - 1$ se vé que $I \land f_v \leq 0 \implica i = |esc| - 1$, condición bajo la cual vale $\neg B$. Por lo tanto, $I \land f_v \leq 0 \implica \neg B$.
+\end{enumerate}
+
+Demostrada la correctitud parcial y la terminación del ciclo, queda entonces demostrada su correctitud total. 
+
+Para ver que el programa entero es correcto respecto de su especificación, queda ver que $P \implica wp(S_{1-8}, P_c)$
+
+$wp(i := 2, P_c) \equiv \{P \yLuego 2 = 2 \land ((esc[0] > esc[1] \land i\_max = 0 \land i\_seg = 1) \lor (esc[1] > esc[0] \land i\_max = 1 \land i\_seg = 0))\} \equiv \\ \{P \yLuego ((esc[0] > esc[1] \land i\_max = 0 \land i\_seg = 1) \lor (esc[1] > esc[0] \land i\_max = 1 \land i\_seg = 0))\} \equiv Q_8$\\\\
+$wp(S_{1-8}, P_c) \equiv wp(\IfThenElse{esc[0]>esc[1]}{i\_max := 0; i\_seg := 1}{i\_max := 1; i\_seg := 0}, Q_8) \equiv \\ 1 < |esc| \yLuego ((esc[0]>esc[1] \land wp(i\_max := 0, wp(i\_seg := 1,Q_8))) \lor (esc[0] \leq esc[1] \land wp(i\_max := 1, wp(i\_seg := 0,Q_8))))$\\\\
+$wp(i\_max := 0, wp(i\_seg := 1,Q_8)) \equiv \{P \yLuego ((esc[0] > esc[1] \land 0 = 0 \land 1 = 1) \lor (esc[1] > esc[0] \land 0 = 1 \land 1 = 0))\} \equiv \{P \yLuego esc[0] > esc[1]\}$\\\\
+$wp(i\_max := 1, wp(i\_seg := 0,Q_8)) \equiv \{P \yLuego ((esc[0] > esc[1] \land 1 = 0 \land 0 = 1) \lor (esc[1] > esc[0] \land 1 = 1 \land 0 = 0))\} \equiv \{P \yLuego esc[0] \leq esc[1]\}$\\\\
+$wp(S_{1-8}, P_c) \equiv \{1 < |esc| \yLuego P\}$
+
+Dado que
+\begin{itemize}
+    \item $P \implica P$
+    \item $P \implica 1 < |esc|$
+\end{itemize}
+
+Se vé que $P \implica wp(S_{1-8}, P_c)$, con lo que queda demostrada la correctitud del programa previo al ciclo. Demostrada la correctitud del programa antes, durante y después del ciclo, por monotonía queda demostrada la correctitud del programa completo.
+
+% Lo principal: las fórmulas. Se puede poner en una linea, como $x_i = x_{i-1} + x_{i-2}$, o ponerse más grande:
+
+% \begin{equation}
+% 	\sum\limits_{i=0}^{n} i
+% 	\label{eq:1}
+% \end{equation}
+
+% Y se pueden citar ecuaciones con \verb|\eqref{nombreDeEq}|: \eqref{eq:1}
+
+% Ejemplo de itemizado:
+
+% \begin{itemize}
+% 	\item Item 1
+% 	\item Item 2
+% 	\item Item 3
+% \end{itemize}
+
+% Ejemplo de enumerado con menor distancia entre items:
+
+% \begin{enumerate} \setlength\itemsep{0cm}
+% 	\item Item 1
+% 	\item Item 2
+% 	\item Item 3
+% \end{enumerate}
+
+% Podemos escribir mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto.
+
+% Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo.
+
+% \vspace{0.3cm}
+
+% Le agregamos una separación entre párrafos. Le agregamos una separación entre párrafos. Le agregamos una separación entre párrafos. Le agregamos una separación entre párrafos. Le agregamos una separación entre párrafos.
+
+% \vspace{0.3cm}
+% La tabla \ref{tab:ejemplo} es un ejemplo de cómo se hace una tabla.
+
+% \begin{table}[h!]
+% 	\centering
+% 	\begin{tabular}{||l c c r||} 
+% 		\hline
+% 		Col1 & Col2 & Col2 & Col3 \\ [0.5ex] 
+% 		\hline\hline
+% 		1 & 6 & 87837 & 787 \\ 
+% 		2 & 7 & 78 & 5415 \\
+% 		3 & 545 & 778 & 7507 \\
+% 		4 & 545 & 18744 & 7560 \\
+% 		5 & 88 & 788 & 6344 \\
+% 		\hline
+% 	\end{tabular}
+% 	\caption{Ejemplo de tabla}
+% 	\label{tab:ejemplo}
+% \end{table}
+
+
+% % Para hacer que quede todo en una misma linea, se puede usar minipage
+% %\begin{minipage}[t]{\textwidth}
+% 	\begin{lstlisting}[caption={Ejemplo de código (usando los estilos de la cátedra, ver las macros para más detalles)},label=code:for]
+% res := 0;
+% i := 0;
+% while (i < s.size()) do
+% 	res := res + s[i];
+% 	i := i + 1
+% endwhile
+% 	\end{lstlisting}
+% %\end{minipage}
+
+% Si se pone un label al \verb|lstlisting|, se puede referenciar: Código \ref{code:for}.
+
+
+% \subsection{Macros de la cátedra para especificar}
+
+% \begin{proc}{nombre}{\In paramIn : \nat, \Inout paramInout : \TLista{\ent}}{tipoRes}
+% 	%    \modifica{parametro1, parametro2,..}
+% 	\requiere{expresionBooleana1}
+% 	\asegura{expresionBooleana2}
+% 	\aux{auxiliar1}{parametros}{tipoRes}{expresion}
+% 	\pred{pred1}{parametros}{expresion} 
+% \end{proc}
+
+% \aux{auxiliarSuelto}{parametros}{tipoRes}{expresion}
+% % \paraTodo{variable}{tipo}{expresion}
+% % \existe{variable}{tipo}{expresion}
+% % Pueden tener [unalinea] para que no se divida en varias lineas
+% \pred{predSuelto}{parametros}{\paraTodo[unalinea]{variable}{tipo}{algo \implicaLuego expresion}}
+% \pred{predSuelto}{parametros}{\existe[unalinea]{variable}{tipo}{algo \yLuego expresion}}
+
+\end{document}
+
+Integrante LU Correo electr ́onico
+Apellido, Nombre1 001/01 email1@dominio.com
+Apellido, Nombre2 002/01 email2@dominio.com
+Apellido, Nombre3 003/01 email3@dominio.com
+Apellido, Nombre4 004/01 email4@dominio.com

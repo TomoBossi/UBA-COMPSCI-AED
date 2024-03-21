@@ -13,14 +13,14 @@ Buscar mínimo:
     - ABB O(n) (por necesidad de búsqueda en caso de máximo desbalanceo)
     - AVL O(log(n)) (por necesidad de iterar sobre los nodos hacia el extremo izquierdo)
     - heap binario O(1) (asumiendo min heap, O(n) si max heap)
-    - trie O(|a|**cantidad de digitos del minimo) /* DUDA */
+    - trie O(1) (es O(longitud máxima de clave), que es O(1) asumiendo que la longitud máxima está acotada; el mínimo es el elemento más a la izquierda)
 Borrar mínimo:
     - Lista enlazada desordenada O(n) (por necesidad de búsqueda del mínimo)
     - Lista enlazada ordenada O(1) (si ordenada de menor a mayor, o en cualquier caso si doblemente enlazada)
     - ABB O(n) (por necesidad de búsqueda en caso de máximo desbalanceo, luego el borrado en sí es O(1))
     - AVL O(log(n)) (por necesidad de iterar sobre los nodos hacia el extremo izquierdo y porque la deleción en peor caso (con necesidad de rebalanceo) es O(log(n)))
-    - heap binario O(n) (si min heap, desencolar es O(1) y reestructurar es O(n); si max heap O(n) tanto por búsqueda como por reestructuramiento)
-    - trie O(|a|**cantidad de digitos del minimo) (requiere búsqueda del mínimo) /* DUDA */
+    - heap binario O(log(n)) (si min heap, desencolar es O(1) y reestructurar es O(log(n)); si max heap O(n) por búsqueda)
+    - trie O(1) (asumiendo longitud máxima acotada para las claves)
 Insertar (con necesidad de búsqueda): 
     - Lista enlazada desordenada O(n) (por necesidad de búsqueda del elemento a insertar, la inserción en sí es O(1))
     - Lista enlazada ordenada O(n) (idem desordenada, no se puede hace búsqueda binaria sobre lista enlazada, no se aprovecha el ordenamiento)
@@ -33,7 +33,7 @@ Borrar (con necesidad de búsqueda):
     - Lista enlazada ordenada O(n) (idem desordenada, no se puede hace búsqueda binaria sobre lista enlazada, no se aprovecha el ordenamiento)
     - ABB O(n) (por necesidad de búsqueda en caso de máximo desbalanceo, luego el borrado en sí es O(1))
     - AVL O(log(n)) (porque la búsqueda es O(log(n)) y la deleción en peor caso (con necesidad de rebalanceo) es O(log(n)))
-    - heap binario O(n) (requiere búsqueda)
+    - heap binario O(n) (borrar en sí es O(log(n)), pero la búsqueda es O(n))
     - trie O(|k|)
 
 2.1.no ordenadas.
@@ -80,7 +80,7 @@ proc interseccion(in l1, l2: ListaEnlazada<T>, out l: ListaEnlazada<T>) { // l1 
     return l; // O(1)
 } // O((n + cp(T))*m)
 
-2.1.ordenadas (de menor a mayor). /* DUDA no es posible que sea necesario hacer semejante desastre - necesito consejos para saber cómo refactorizar */
+2.1.ordenadas (de menor a mayor).
 proc union(in l1, l2: ListaEnlazada<T>, out l: ListaEnlazada<T>) { // l1 de largo n, l2 de largo m
     ListaEnlazada<T> l = new ListaEnlazada<T>; // O(1)
     l = listaVacía(); // O(1)
@@ -287,10 +287,11 @@ Módulo matrizInfinitaImpl implementa TAD Matriz infinita de booleanos {
     /* obs.: el proc asignar, del que no se pide nada, se encarga de redimensionar a elems */
 
     proc crear(out m: matrizInfinitaImpl) {
+        matrizInfinitaImpl m = new matrizInfinitaImpl; // O(1)
         Array<bool> fila = new Array<bool>[0]; // O(1)
         fila = []; // O(1)
         Array<Array<bool>> matriz = new Array<Array<bool>>[0][0]; // O(1)
-        matriz = [sub]; // O(1)
+        matriz = [fila]; // O(1)
         m.elems = matriz; // O(1)
         m.complemento = false; // O(1)
     } // O(1)
@@ -527,9 +528,12 @@ proc estaCompleto(in a: AB<T>, out res: bool) {
     return res; // O(1)
 } // seguramente exista una mejor cota, pero aún más seguramente una cota válida es O(|a|**2)
 
-7. /* DUDA */
+7.1. /* DUDA */
 
-8.1. /* DUDA ¿puedo asumir las cosas que asumo? Unión e intersección me quedan horribles */
+7.2. 
+Ver TP2.
+
+8.1.
 Módulo cojuntoMinMax<int> implementa TAD Conjunto<Nat> {
     var elems: ListaEnlazada<int>; // siempre se mantiene ordenada
     var min: int; // se inicializa como -1 y se actualiza al agregar elementos
@@ -546,7 +550,6 @@ Módulo cojuntoMinMax<int> implementa TAD Conjunto<Nat> {
             c.elems.agregar_en_orden(elem); // O(n), asumo que ListaEnlazada<T> tiene implementado este proc que permite, con una sola pasada sobre la lista, agregar al elemento en la posición que le corresponde tal que se preserve el orden
         }
     } // O(1) si elem es nuevo max o min, O(n) si no
-
 
     // asumo que el iterador tiene, además de .siguiente(), .avanzar(); .siguiente() sólo da el próximo elemento sin avanzar el iterador, .avanzar() lo avanza
     // tanto .siguiente() como .avanzar() son O(1) dado que conjuntoLineal<T> se implementa sobre ListaEnlazada<T>
@@ -636,7 +639,310 @@ El tipo debe ser ordenable, los costos de copia y comparación deben ser O(1) y,
 dado el diseño específicamente utilizado, debe haber al menos un elemento del tipo que pueda ser reservado para denotar la no existencia de mínimo o máximo 
 (como el -1 en el caso de los naturales, implementados con el tipo int).
 
+9.1.
+Módulo Relaciones_0_100 implementa TAD Relaciones { // basado en matrizInfinitaImpl, ej. 3.
+    var pares: Array<Array<bool>>;
 
+    proc crear(out r: Relaciones_0_100) {
+        Relaciones_0_100 r = new Relaciones_0_100; // O(1)
+        Array<Array<bool>> matriz = new Array<Array<bool>>[101][101]; // O(1)
+        r.pares = matriz; // O(1)
+        return r; // O(1)
+    } // O(1)
 
+    proc agregar_pareja(inout r: Relaciones_0_100, in a: int, in b: int) { // agrega aRb
+        r.pares[a][b] = true; // O(1)
+    } // O(1)
 
+    proc borrar_pareja(inout r: Relaciones_0_100, in a: int, in b: int) { // borra aRb
+        r.pares[a][b] = false; // O(1)
+    } // O(1)
 
+    proc b_tq_aRb(in r: Relaciones_0_100, in a: int, out res: ListaEnlazada<int>) {
+        ListaEnlazada<int> res = new ListaEnlazada<int>; // O(1)
+        res = lista_vacía(); // O(1)
+        for (int b = 0; b <= 100; b++) { // O(1)
+            if (r[a][b]) { // O(1)
+                res.agregar_atrás(b); // O(1)
+            }
+        } // O(1)
+    } // O(1)
+
+    proc b_tq_bRA(in r: Relaciones_0_100, in a: int, out res: ListaEnlazada<int>) {
+        ListaEnlazada<int> res = new ListaEnlazada<int>; // O(1)
+        res = lista_vacía(); // O(1)
+        for (int b = 0; b <= 100; b++) { // O(1)
+            if (r[b][a]) { // O(1)
+                res.agregar_atrás(b); // O(1)
+            }
+        } // O(1)
+    } // O(1)
+}
+
+9.2.
+Módulo Relaciones_rango implementa TAD Relaciones { // basado en matrizInfinitaImpl, ej. 3.
+    var pares: Array<Array<bool>>;
+    var min: int;
+    var max: int; // inclusive
+
+    proc crear(out r: Relaciones_rango, in min: int, in max: int) {
+        Relaciones_rango r = new Relaciones_rango; // O(1)
+        Array<Array<bool>> matriz = new Array<Array<bool>>[max-min+1][max-min+1]; // O((max-min+1)**2)
+        r.pares = matriz; // O(1)
+        return r; // O(1)
+    } // O((max-min+1)**2)
+
+    proc agregar_pareja(inout r: Relaciones_rango, in a: int, in b: int) { // agrega aRb
+        r.pares[a-min][b-min] = true; // O(1)
+    } // O(1)
+
+    proc borrar_pareja(inout r: Relaciones_rango, in a: int, in b: int) { // borra aRb
+        r.pares[a-min][b-min] = false; // O(1)
+    } // O(1)
+
+    proc b_tq_aRb(in r: Relaciones_rango, in a: int, out res: ListaEnlazada<int>) {
+        ListaEnlazada<int> res = new ListaEnlazada<int>; // O(1)
+        res = lista_vacía(); // O(1)
+        for (int b = min; b <= max; b++) { // O(1)
+            if (r[a-min][b-min]) { // O(1)
+                res.agregar_atrás(b); // O(1)
+            }
+        } // O(1)
+    } // O(1)
+
+    proc b_tq_bRA(in r: Relaciones_rango, in a: int, out res: ListaEnlazada<int>) {
+        ListaEnlazada<int> res = new ListaEnlazada<int>; // O(1)
+        res = lista_vacía(); // O(1)
+        for (int b = min; b <= max; b++) { // O(1)
+            if (r[b-min][a-min]) { // O(1)
+                res.agregar_atrás(b); // O(1)
+            }
+        } // O(1)
+    } // O(1)
+}
+
+9.3.
+// Agregar a una matriz redimensionable podría ser demasiado costoso, podría ser preferible una estructura de árbol.
+
+Módulo Relaciones implementa TAD Relaciones {
+    var pares: ConjuntoLog<<int, int>>;
+
+    proc crear(out r: Relaciones) {
+        Relaciones r = new Relaciones(); // O(1)
+        ConjuntoLog<<int, int>> c = new ConjuntoLog<<int, int>>; // O(1)
+        c = conj_vacío(); // O(1)
+        r.pares = c; // O(1)
+        return r; // O(1)
+    }
+
+    proc agregar_pareja(inout r: Relaciones, in a: int, in b: int) { // agrega aRb
+        if (!r.pares.pertenece(<a, b>)) { // O(log(n))
+            r.pares.agregar_rapido(<a, b>); // O(log(n))
+        }
+    } // O(log(n))
+
+    proc borrar_pareja(inout r: Relaciones, in a: int, in b: int) { // agrega aRb
+        r.pares.sacar(<a, b>); // O(log(n))
+    } // O(log(n))
+
+    proc b_tq_aRb(in r: Relaciones, in a: int, out res: ListaEnlazada<int>) {
+        ListaEnlazada<int> res = new ListaEnlazada<int>; // O(1)
+        res = lista_vacía(); // O(1)
+        Iterador<ConjuntoLog<<int, int>>> it = new Iterador<ConjuntoLog<<int, int>>>; // O(1)
+        it = r.pares.iterador(); // O(1)
+        
+        while (it.hay_siguiente()) {
+            <int, int> <a', b> = it.siguiente();
+            if (a == a') { // O(1)
+                res.agregar_atrás(b); // O(1)
+            }
+        } // O(n)
+    } // O(n)
+
+    proc b_tq_bRa(in r: Relaciones, in a: int, out res: ListaEnlazada<int>) {
+        ListaEnlazada<int> res = new ListaEnlazada<int>; // O(1)
+        res = lista_vacía(); // O(1)
+        Iterador<ConjuntoLog<<int, int>>> it = new Iterador<ConjuntoLog<<int, int>>>; // O(1)
+        it = r.pares.iterador(); // O(1)
+        
+        while (it.hay_siguiente()) {
+            <int, int> <b, a'> = it.siguiente();
+            if (a == a') { // O(1)
+                res.agregar_atrás(b); // O(1)
+            }
+        } // O(n)
+    } // O(n)
+}
+
+10.1, 4.
+Modulo IngresosAlBancoImpl implementa TAD IngresosAlBanco {
+	var totales_acumulados: Array<int>; 
+
+	...
+	
+	proc mediana(in i: IngresosAlBancoImpl, out d: int) {
+		n = i.totales_acumulados.length;
+		for d = n-1..0 inclusive {
+			if (cantPersonas(i, 1, d) <= cantPersonas(i, d+1, totDias(i))) {
+				return d;
+			}
+		}
+	}
+}
+
+10.2, 3.
+El tamaño de la estructura es función lineal 1 a 1 de la cantidad de días transucrridos.
+
+11.1, 2, 3, 4, 5.
+Modulo TextoImpl implementa TAD Texto {
+    var palabras: Vector<Palabra>; // el texto en sí
+    var posiciones_por_palabra: DictTrie<Palabra, ConjuntoLineal<int>>; // palabra, conjunto de posiciones
+    var repeticiones_maxima: int;
+    var palabras_mas_repetidas: ConjuntoTrie<Palabra>;
+    var largo: int;
+    
+    pred InvRep(t: TextoImpl) {
+        // toda palabra en palabras está en posiciones_por_palabra y viceversa
+        forall i: Z :: 0 <= i < t.largo =>L t.palabras[i] in t.posiciones_por_palabra
+        forall p: Palabra :: p in t.posiciones_por_palabra =>L p in t.palabras[0..largo-1]
+        // las palabras de posiciones_por_palabra están en palabras en las posiciones indicadas, y todas las posiciones están entre 0 y largo-1
+        forall p: Palabra :: p in t.posiciones_por_palabra =>L
+            forall i: Z :: i in t.posiciones_por_palabra[p] =>L 0 <= i < t.largo ^L t.palabras[i] == p
+        // largo es la suma de las longitudes de todos los conjuntos de posiciones_por_palabra
+        t.largo = sum :: p in t.posiciones_por_palabra :: |t.posiciones_por_palabra[p]|
+        // todas las palabras en palabras_mas_repetidas tienen conjunto de repeticiones_maxima elementos
+        forall p: Palabra :: p in t.palabras_mas_repetidas <=> (p in t.posiciones_por_palabra ^L |t.posiciones_por_palabra[p]| == t.repeticiones_maxima)
+        // repeticiones_maxima es el maximo de las longitudes en t.posiciones_por_palabra
+        exists p: Palabra :: p in t.posiciones_por_palabra ^L |t.posiciones_por_palabra[p]| == t.repeticiones_maxima
+        !exists p: Palabra :: p in t.posiciones_por_palabra ^L |t.posiciones_por_palabra[p]| > t.repeticiones_maxima
+        // no hay posiciones repetidas entre los conjuntos de posiciones_por_palabra (por invariante de conjunto, tampoco dentro de cada uno)
+        forall p: Palabra :: p in t.posiciones_por_palabra =>L 
+            forall i: int :: i in t.posiciones_por_palabra[p] =>L 
+                !exists p': Palabra :: (p' != p ^ p' in t.posiciones_por_palabra) ^L i in t.posiciones_por_palabra[p']
+    }
+
+    FuncAbs(in t': TextoImplt, out t: Texto) {
+        t: Texto |
+        t.palabras == t'.palabras[0..t'.largo-1] // mismas palabras, mismo orden
+    }
+
+    proc cambiarPalabra(inout t: TextoImpl, in vieja, nueva: Palabra) {
+        ConjuntoLineal<int> pos_vieja = t.posiciones_por_palabra.obtener(vieja); // O(1)
+        int #vieja = pos_vieja.tamaño(); // O(1)
+        int #nueva = t.posiciones_por_palabra.obtener(nueva).tamaño(); // O(1)
+        int #total = #vieja + #nueva; // O(1)
+        Iterador<ConjuntoLineal<int>> it = new Iterador<ConjuntoLineal<int>>; // O(1)
+        it = pos_vieja.iterador(); // O(1)
+        while (it.hay_siguiente()) { // O(1)
+            i = it.siguiente(); // O(1)
+            t.palabras[i] = nueva; // O(1)
+        } // O(k)
+        
+        t.posiciones_por_palabra.obtener(nueva).unir_rapido(pos_vieja); // O(1)
+
+        if (#total > t.repeticiones_maxima) { // O(1)
+            ConjuntoTrie<Palabra> conj = new ConjuntoTrie<int>; // O(1)
+            conj = conj_vacio(); // O(1)
+            conj.agregar(nueva); // O(1)
+            t.repeticiones_maxima = #total; // O(1)
+            t.palabras_mas_repetidas = conj; // O(1)
+        } else if (#total == t.repeticiones_maxima) { // O(1)
+            t.palabras_mas_repetidas.agregar(nueva); // O(1)
+        }
+    } // O(k)
+
+    proc subtexto(in t: TextoImpl, in desde, hasta: int, out res: TextoImpl) {
+        TextoImpl res = new TextoImpl; // O(1)
+        res = nuevo_texto(); // O(1)
+        for (i=desde..hasta inclusive) { // O(1)
+            res.agregar_palabra(t.palabras[i]); // O(1)
+        } // O(hasta - desde)
+    } // O(hasta - desde)
+
+    proc agregar_palabra(inout t: TextoImpl, p: Palabra) {
+        if (!t.posiciones_por_palabra.está(palabra)) { // O(1)    
+            ConjuntoLineal<int> conj = new ConjuntoLineal<int>; // O(1)
+            conj = conj_vacio(); // O(1)
+            conj.agregar(t.largo); // O(1)
+            t.posiciones_por_palabra.definir(palabra, conj); // O(1)
+            if (t.repeticiones_maxima == 0) { // O(1)
+                t.repeticiones_maxima = 1; // O(1)
+                t.palabras_mas_repetidas.agregar_rapido(palabra); // O(1)
+            }
+        } else {
+            t.posiciones_por_palabra.obtener(palabra).agregar_rapido(t.largo); // O(1)
+            if (t.posiciones_por_palabra.obtener(palabra).tamaño() > t.repeticiones_maxima) { // O(1)
+                t.repeticiones_maxima = t.posiciones_por_palabra.obtener(palabra).tamaño(); // O(1)
+                ConjuntoTrie<Palabra> conj = new ConjuntoTrie<int>; // O(1)
+                conj = conj_vacio(); // O(1)
+                conj.agregar(palabra); // O(1)
+                t.palabras_mas_repetidas = conj;
+            }
+        }
+        t.palabras.agregarAtras(palabra); // O(n)
+        t.largo++; // O(1)
+    } // O(1)
+}
+
+Esta estructura permite implementar todos los procs del TAD y con la eficiencia pedida donde fue especificada:
+- masRepetidas es O(1) pues consiste en simplemente devolver la var palabras_mas_repetidas.
+- subtexto es trivialmente O(hasta - desde) porque consiste simplemente en tomar el slice correspondiente del vector palabras y devolverlo.
+- cambiarPalabra es O(k) pues consiste en:
+    buscar ambas palabras involucradas en el DictTrie (O(1))
+    modificar todas las posiciones de la palabra a ser cambiada en el array (O(k))
+    según el caso:
+        si la nueva palabra no está en el texto:
+            crear nuevo elemento en el DictTrie para la palabra, usando al conjunto de la palabra cambiada como valor, y borrar el par asociado a la palabra cambiada (O(1))
+        si la nueva palabra ya está en el texto:
+            concatenar los conjuntos (O(1)) en la entrada del DictTrie para la palabra nueva, borrar el par asociado a la cambiada (O(1))
+    si ahora cambió la palabra de maximas apariciones (o se tiene que agregar una al set), modificar tanto repeticiones_maxima como palabras_mas_repetidas de manera acorde (O(1))
+
+12.1, 2, 3.
+Modulo TorneoImpl implementa TAD Torneo {
+    var equipos: ConjuntoAVL<Equipo>; // paralelo a obs equipos
+    var partidos: ListaEnlazada<Partido, struct<goles_ganador: int, goles_perdedor: int>>; // paralelo a obs partidos, con struct extra para 12.3.
+    var puntajes_por_equipo: DictAVL<Equipo, Puntaje>; // sirve para tener puntos en O(log(n))
+    var posiciones_por_puntaje: DictAVL<Puntaje, struct<posición: Posición, cantidad: int>>; // posición, conjunto de equipos en esa posición; sirve para tener registrarPartido en O(log(n))
+    // el conjunto de las últimas 2 vars da posicion en O(log(n))
+
+    proc puntos(in t: TorneoImpl, in e: Equipo out res: int) {
+        return t.puntajes_por_equipo.obtener(e); // O(log(n))
+    } // O(log(n))
+
+    proc posición(in t: TorneoImpl, in e: Equipo out res: int) {
+        return t.posiciones_por_puntaje[t.puntajes_por_equipo.obtener(e)].posición; // O(log(n))
+    } // O(log(n))
+
+    proc registrarPartido(inout t: TorneoImpl, in ganador: Equipo, in perdedor: Equipo) {} // es un bardo, ver resuelto
+
+    proc max_diferencia(in t: TorneoImpl, out res: Equipo) {
+        int max = 0; // O(1)
+        Equipo res = null; // O(1)
+        Iterador<ListaEnlazada<Partido, struct<goles_ganador: int, goles_perdedor: int>>> it = new Iterador<ListaEnlazada<Partido, struct<goles_ganador: int, goles_perdedor: int>>>; // O(1)
+        it = t.partidos.iterador(); // O(1)
+        while(it.hay_siguiente()) { // O(1)
+            <<Equipo, Equipo>, <int, int>> <<ganador, _>, <goles_ganador, goles_perdedor>> = it.siguiente(); // O(1)
+            int diff = goles_ganador - goles_perdedor; // O(1)
+            if (diff > max) { // O(1)
+                max = diff; // O(1)
+                res = ganador; // O(1)
+            }
+        } // O(#partidos)
+        return res; // O(1)
+    } // O(#partidos)
+}
+
+13.1, 2, 3.
+Modulo SUECOimpl implementa TAD SUECO {
+    var boletos: Vector<<Tiempo, Plata>>; // permite recuperar los obs, agregar_boleto en O(n)
+    var cantidad_acumulada: DictAVL<Tiempo, int>; // permite obtener cantidad_intervalo en O(log(n)), y en agregar_boleto es modificable en O(n)
+    var plata_acumulada: DictAVL<Tiempo, Plata>; // permite obtener plata_intervalo en O(log(n)), y en agregar_boleto es modificable en O(n)
+
+    ...
+}
+
+agregar_boleto agrega el boleto (su info de tiempo y plata) al vector boletos (O(n)) y modifica cantidad_acumulada y plata_acumulada. 
+Recorre ambos árboles in-order hasta encontrar o insertar donde corresponde al tiempo del boleto (con cantidad y plata 0, según el árbol). // O(n + log(n)) == O(n)
+Suma 1/suma la plata del boleto a ese y todos los elementos que siguen, in-order (O(n)).
+ 
+cantidad_intervalo busca inicio y fin en cantidad_acumulada (O(log(n))) y resta el valor de fin y el de inicio para obtener y devolver el resultado (O(1)).
